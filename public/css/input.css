@@ -1,3 +1,270 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer utilities {
+
+  .bg-ocean {
+    background: linear-gradient(to right, #2193b0, #6dd5ed);
+  }
+
+  .bg-sky {
+    background: linear-gradient(to right, #00c6ff, #0072ff);
+  }
+
+  .bg-aurora {
+    background: linear-gradient(to right, #00f260, #0575e6);
+  }
+
+  .bg-sunset {
+    background: linear-gradient(to right, #ff7e5f, #feb47b);
+  }
+
+  .bg-fire {
+    background: linear-gradient(to right, #f12711, #f5af19);
+  }
+
+  .bg-candy {
+    background: linear-gradient(to right, #ff9a9e, #fad0c4);
+  }
+
+  .bg-royal {
+    background: linear-gradient(to right, #141e30, #243b55);
+  }
+
+  .bg-cosmic {
+    background: linear-gradient(to right, #ff00cc, #333399);
+  }
+
+  .bg-mint {
+    background: linear-gradient(to right, #76b852, #8DC26F);
+  }
+
+  .bg-peach {
+    background: linear-gradient(to right, #ed4264, #ffedbc);
+  }
+
+  .bg-lavender {
+    background: linear-gradient(to right, #c471f5, #fa71cd);
+  }
+
+  /* DONE UNTIL LAVENDER */
+
+  /* --- Cool Professional --- */
+  .bg-arctic {
+    background: linear-gradient(to right, #8ec5fc, #e0c3fc);
+  }
+
+  .bg-glacier {
+    background: linear-gradient(to right, #74ebd5, #ACB6E5);
+  }
+
+  .bg-frost {
+    background: linear-gradient(to right, #cfd9df, #e2ebf0);
+  }
+
+  /* DONE UNTIL FROST */
+
+  /* --- Tech / SaaS Style --- */
+  .bg-circuit {
+    background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+  }
+
+  .bg-terminal {
+    background: linear-gradient(to right, #141e30, #243b55, #0f2027);
+  }
+
+  .bg-digital {
+    background: linear-gradient(to right, #00c9ff, #92fe9d);
+  }
+
+
+  /* --- Premium / Luxury --- */
+  .bg-gold {
+    background: linear-gradient(to right, #d4af37, #f6e27a, #d4af37);
+  }
+
+  .bg-velvet {
+    background: linear-gradient(to right, #3a1c71, #d76d77, #ffaf7b);
+  }
+
+  .bg-royalty {
+    background: linear-gradient(to right, #42275a, #734b6d);
+  }
+
+
+  /* --- Soft UI Friendly --- */
+  .bg-rosewater {
+    background: linear-gradient(to right, #fbc2eb, #a6c1ee);
+  }
+
+  .bg-blush {
+    background: linear-gradient(to right, #ffdde1, #ee9ca7);
+  }
+
+  .bg-cloud {
+    background: linear-gradient(to right, #d7d2cc, #304352);
+  }
+
+  /* --- Oceanic Variants --- */
+  .bg-lagoon {
+    background: linear-gradient(to right, #43cea2, #185a9d);
+  }
+
+  .bg-deepsea {
+    background: linear-gradient(to right, #2c3e50, #4ca1af);
+  }
+
+  .bg-aquafoam {
+    background: linear-gradient(to right, #5ee7df, #b490ca);
+  }
+
+
+  /* --- Warm Elegant --- */
+  .bg-ember {
+    background: linear-gradient(to right, #ff512f, #dd2476);
+  }
+
+  .bg-caramel {
+    background: linear-gradient(to right, #c79081, #dfa579);
+  }
+
+  .bg-amberlight {
+    background: linear-gradient(to right, #f7971e, #ffd200);
+  }
+
+
+  /* --- Modern UI Tones --- */
+  .bg-graphite {
+    background: linear-gradient(to right, #232526, #414345);
+  }
+
+  .bg-steel {
+    background: linear-gradient(to right, #485563, #29323c);
+  }
+
+  .bg-ink {
+    background: linear-gradient(to right, #141e30, #243b55, #141e30);
+  }
+
+  /* ---------- NEW GRADIENTS ---------- */
+
+  /* Cool */
+  .bg-iceflow {
+    background: linear-gradient(to right, #83a4d4, #b6fbff);
+  }
+
+  .bg-polar {
+    background: linear-gradient(to right, #a1c4fd, #c2e9fb);
+  }
+
+  /* Warm */
+  .bg-molten {
+    background: linear-gradient(to right, #ff512f, #f09819);
+  }
+
+  .bg-saffron {
+    background: linear-gradient(to right, #f7971e, #ffd200);
+  }
+
+  /* Dark / Professional */
+  .bg-obsidian {
+    background: linear-gradient(to right, #0f0c29, #302b63, #24243e);
+  }
+
+  .bg-midnight {
+    background: linear-gradient(to right, #232526, #1c1c1c);
+  }
+
+  /* Soft / Pastel */
+  .bg-dream {
+    background: linear-gradient(to right, #fdfbfb, #ebedee);
+  }
+
+  /* Vibrant */
+  .bg-neon {
+    background: linear-gradient(to right, #fc466b, #3f5efb);
+  }
+
+  /* Premium */
+  .bg-imperial {
+    background: linear-gradient(to right, #243949, #517fa4);
+  }
+
+  /* Day 5 Gradients */
+
+  /* Cool */
+  .bg-arcticwave {
+    background: linear-gradient(to right, #89f7fe, #66a6ff);
+  }
+
+  .bg-blueveil {
+    background: linear-gradient(to right, #c9d6ff, #e2e2e2);
+  }
+
+  /* Warm */
+  .bg-flare {
+    background: linear-gradient(to right, #f953c6, #b91d73);
+  }
+
+  .bg-sunburst {
+    background: linear-gradient(to right, #ffb347, #ffcc33);
+  }
+
+  /* Dark */
+  .bg-eclipse {
+    background: linear-gradient(to right, #0f2027, #000000);
+  }
+
+  .bg-shadow {
+    background: linear-gradient(to right, #434343, #000000);
+  }
+
+  /* Pastel */
+  .bg-petal {
+    background: linear-gradient(to right, #fbd3e9, #bb377d);
+  }
+
+  /* Vibrant */
+  .bg-spectrum {
+    background: linear-gradient(to right, #00f5a0, #00d9f5);
+  }
+
+  /* Mystic */
+  .bg-ethereal {
+    background: linear-gradient(to right, #4facfe, #00f2fe);
+  }
+
+  /* Deep Space */
+  .bg-singularity {
+    background: linear-gradient(to right, #1f1c2c, #928dab);
+  }
+
+  /* Nature */
+  .bg-forestmist {
+    background: linear-gradient(to right, #5a3f37, #2c7744);
+  }
+
+  /* Premium Cool */
+  .bg-platinum {
+    background: linear-gradient(to right, #bdc3c7, #2c3e50);
+  }
+
+  /* Soft Modern */
+  .bg-hush {
+    background: linear-gradient(to right, #e0eafc, #cfdef3);
+  }
+
+  /* Electric */
+  .bg-voltage {
+    background: linear-gradient(to right, #00ff87, #60efff);
+  }
+
+  /* Warm Depth */
+  .bg-sundrift {
+    background: linear-gradient(to right, #ee9ca7, #ffdde1, #ee9ca7);
+  }
+
+  
+
+}

@@ -1,37 +1,83 @@
-export function createUser({
-  fullname,
-  email,
-  password,
-  role = "student",
+import mongoose from "mongoose";
+
+const teachingSchema = new mongoose.Schema({
+  year: {
+    type: Number,
+    required: true
+  },
+
+  section: {
+    type: String,
+    uppercase: true,
+    required: true
+  },
+
+  subject: {
+    type: String,
+    required: true
+  }
+}, { _id: false });
+
+const userSchema = new mongoose.Schema({
+
+  fullname: {
+    type: String,
+    required: true,
+    trim: true
+  },
+
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    lowercase: true,
+    trim: true
+  },
+
+  password: {
+    type: String,
+    required: true
+  },
+
+  role: {
+    type: String,
+    enum: ["student", "faculty"],
+    default: "student"
+  },
 
   // student fields
-  rollNumber = null,
-  yearOfStudy = null,
-  semester = null,
-  section = null,
+  rollNumber: {
+    type: String,
+    default: null
+  },
+
+  yearOfStudy: {
+    type: Number,
+    default: null
+  },
+
+  semester: {
+    type: Number,
+    default: null
+  },
+
+  section: {
+    type: String,
+    uppercase: true,
+    default: null
+  },
 
   // faculty fields
-  designation = null,
-  teaching = []
+  designation: {
+    type: String,
+    default: null
+  },
 
-}) {
-  return {
-    fullname: fullname.trim(),
-    email: email.toLowerCase().trim(),
-    password,
-    role,
+  teaching: {
+    type: [teachingSchema],
+    default: []
+  }
 
-    // student
-    rollNumber,
-    yearOfStudy,
-    semester,
-    section: section ? section.toUpperCase() : null,
+}, { timestamps: true });
 
-    // faculty
-    designation,
-    teaching,
-
-    createdAt: new Date(),
-    updatedAt: new Date()
-  };
-}
+export default mongoose.model("User", userSchema);
