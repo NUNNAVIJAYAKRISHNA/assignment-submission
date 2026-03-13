@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Faculty Registration</title>
+  <link rel="stylesheet" href="/css/output.css">
+</head>
+
+<body class="flex items-center justify-center min-h-screen bg-hush">
+
+  <div class="bg-white w-11/12 rounded-xl shadow-lg md:w-3/4 lg:w-2/3">
+
+    <h1 class="text-center text-xl font-semibold p-4">
+      Faculty Registration
+    </h1>
+
+    <form action="/faculty/register" method="POST" class="flex flex-col p-6 gap-2">
+
+      <!-- role -->
+      <input type="hidden" name="role" value="faculty">
+
+      <label>Full Name</label>
+      <input name="fullname" type="text" placeholder="Dr. Rao" class="h-10 rounded-md px-3 border">
+
+      <label>Email</label>
+      <input name="email" type="email" placeholder="rao@college.edu" class="h-10 rounded-md px-3 border">
+
+      <label>Designation</label>
+      <input name="designation" type="text" placeholder="Assistant Professor" class="h-10 rounded-md px-3 border">
+
+
+      <!-- Teaching Assignment 1 -->
+      <h2 class="font-semibold mt-4">Teaching Assignment 1</h2>
+
+      <input name="teaching[0][year]" type="number" placeholder="Year (1-4)" class="h-10 rounded-md px-3 border">
+
+      <input name="teaching[0][section]" type="text" placeholder="Section (A/B/C)" class="h-10 rounded-md px-3 border">
+
+      <input name="teaching[0][subject]" type="text" placeholder="Subject" class="h-10 rounded-md px-3 border">
+
+
+      <!-- Teaching Assignment 2 -->
+      <h2 class="font-semibold mt-4">Teaching Assignment 2</h2>
+
+      <input name="teaching[1][year]" type="number" placeholder="Year (1-4)" class="h-10 rounded-md px-3 border">
+
+      <input name="teaching[1][section]" type="text" placeholder="Section (A/B/C)" class="h-10 rounded-md px-3 border">
+
+      <input name="teaching[1][subject]" type="text" placeholder="Subject" class="h-10 rounded-md px-3 border">
+
+
+      <!-- Teaching Assignment 3 -->
+      <h2 class="font-semibold mt-4">Teaching Assignment 3</h2>
+
+      <input name="teaching[2][year]" type="number" placeholder="Year (1-4)" class="h-10 rounded-md px-3 border">
+
+      <input name="teaching[2][section]" type="text" placeholder="Section (A/B/C)" class="h-10 rounded-md px-3 border">
+
+      <input name="teaching[2][subject]" type="text" placeholder="Subject" class="h-10 rounded-md px-3 border">
+
+
+      <label class="mt-4">Password</label>
+      <input name="password" type="password" placeholder="********" class="h-10 rounded-md px-3 border">
+
+
+      <button
+        class="bg-blue-500 text-white font-semibold rounded-md p-2 w-fit mx-auto mt-4 hover:bg-blue-600 transition">
+        Register
+      </button>
+
+    </form>
+
+  </div>
+
+</body>
+
+</html>
