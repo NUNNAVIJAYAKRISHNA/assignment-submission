@@ -22,16 +22,27 @@ assignment-submission
 │   └── db.js                # MongoDB connection setup
 │
 ├── controllers
-│   └── userController.js    # Business logic
+│   ├── authController.js    # Authentication request handling
+│   ├── pageController.js    # Public page rendering
+│   └── studentController.js # Student domain logic
 │
 ├── models
 │   └── userModel.js         # User schema/model
 │
 ├── routes
-│   └── indexRoutes.js       # Application routes
+│   ├── authRoutes.js        # Login & Registration endpoints
+│   ├── dashboardRoutes.js   # Protected dashboard endpoints
+│   └── pageRoutes.js        # General page routing
+│
+├── services
+│   └── facultyService.js    # Complex DB queries & business logic
+│
+├── utils
+│   ├── createUser.js        # User payload transformation
+│   └── loginUser.js         # Credential verification
 │
 ├── views
-│   └── index.ejs            # EJS templates
+│   └── ...                  # EJS templates (dashboards, forms)
 │
 ├── public
 │   ├── css
@@ -121,10 +132,8 @@ http://localhost:8000
 
 ## 📌 Future Features
 
-* Authentication system (login & registration)
 * Assignment creation and management
 * File/link-based submission system
-* Faculty dashboard
 * Student submission tracking
 * Notifications
 

@@ -38,7 +38,7 @@ export function createUser({
     // faculty fields
     designation: designation?.trim() || null,
 
-    teaching: teaching.map(t => ({
+    teaching: (teaching || []).map(t => ({
       year: Number(t.year),
       section: t.section?.toUpperCase(),
       subject: t.subject?.trim()
