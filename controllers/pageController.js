@@ -10,10 +10,6 @@ export function facultyRegistration(req, res) {
   res.render("facultyRegistration");
 }
 
-export function facultyDashboard(req, res) {
-  res.render("facultyDashboard");
-}
-
 export function loginPage(req, res) {
   res.render("loginPage");
 }

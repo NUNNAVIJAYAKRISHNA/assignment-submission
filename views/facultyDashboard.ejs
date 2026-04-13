@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Faculty Dashboard</title>
+  <script>
+    function toggleClass(index) {
+      const element = document.getElementById("class-" + index);
+      if (element.style.display === "none") {
+        element.style.display = "block";
+      } else {
+        element.style.display = "none";
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+    .class-card {
+      background: white;
+      margin-bottom: 15px;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    .class-header {
+      padding: 15px;
+      background: #2c3e50;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+      display: flex;
+      justify-content: space-between;
+    }
+    .student-list {
+      padding: 15px;
+      display: none;
+    }
+    .student-item {
+      padding: 8px;
+      border-bottom: 1px solid #eee;
+    }
+  </style>
+</head>
+<body>
+  <h2>
+    Welcome, <%= user.fullname %>
+  </h2>
+  <h3>
+    Your Classes
+  </h3>
+  <% if(studentList.length===0) { %>
+    <p>
+      No classes assigned.
+    </p>
+    <% } %>
+      <% studentList.forEach((cls, index)=> { %>
+        <div class="class-card">
+          <div class="class-header" data-index="<%= index %>" onclick="toggleClass(this.dataset.index)">
+            <span>
+              Year <%= cls.year %> - Section <%= cls.section %>
+            </span>
+            <span>
+              (<%= cls.students.length %> students)
+            </span>
+          </div>
+          <div id="class-<%= index %>" class="student-list">
+            <% cls.students.forEach(student=> { %>
+              <div class="student-item">
+                <strong>
+                  <%= student.rollNumber %>
+                </strong>
+                -
+                <%= student.fullname %>
+              </div>
+              <% }) %>
+          </div>
+        </div>
+        <% }) %>
+</body>
+
+</html>
