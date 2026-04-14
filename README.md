@@ -9,6 +9,7 @@ Students can submit assignments while faculty members can manage sections, assig
 * **Database:** MongoDB Atlas
 * **Templating Engine:** EJS
 * **Styling:** Tailwind CSS
+* **Authentication & Utilities:** Express Session, bcrypt, Nodemailer
 * **Development Tools:** Nodemon, dotenv
 
 ---
@@ -23,8 +24,10 @@ assignment-submission
 │
 ├── controllers
 │   ├── authController.js    # Authentication request handling
+│   ├── facultyController.js # Faculty domain logic
 │   ├── pageController.js    # Public page rendering
-│   └── studentController.js # Student domain logic
+│   ├── studentController.js # Student domain logic
+│   └── verificationController.js # Email verification logic
 │
 ├── models
 │   └── userModel.js         # User schema/model
@@ -35,11 +38,13 @@ assignment-submission
 │   └── pageRoutes.js        # General page routing
 │
 ├── services
-│   └── facultyService.js    # Complex DB queries & business logic
-│
+│   ├── facultyService.js    # Complex DB queries & business logic
+│   └── studentService.js    # Student domain business logic
+│   
 ├── utils
 │   ├── createUser.js        # User payload transformation
-│   └── loginUser.js         # Credential verification
+│   ├── loginUser.js         # Credential verification
+│   └── sendEmail.js         # Email sending utility
 │
 ├── views
 │   └── ...                  # EJS templates (dashboards, forms)
