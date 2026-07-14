@@ -32,6 +32,7 @@ coverage/
 
 dist/
 build/
+.next/
 
 # Tailwind generated CSS (optional if you don't want to commit it)
 
