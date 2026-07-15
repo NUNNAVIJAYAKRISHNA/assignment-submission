@@ -17,6 +17,7 @@ interface Student {
 interface ClassItem {
   year: number;
   section: string;
+  subject: string;
   assignmentsEnabled: boolean;
   students: Student[];
 }
@@ -27,7 +28,7 @@ export default function FacultyClassesList({ classes }: { classes: ClassItem[] }
   const [assignmentsMap, setAssignmentsMap] = useState<Record<string, boolean>>(() => {
     const initialMap: Record<string, boolean> = {};
     classes.forEach((cls) => {
-      initialMap[`${cls.year}-${cls.section}`] = !!cls.assignmentsEnabled;
+      initialMap[`${cls.year}-${cls.section}-${cls.subject}`] = !!cls.assignmentsEnabled;
     });
     return initialMap;
   });
@@ -36,8 +37,8 @@ export default function FacultyClassesList({ classes }: { classes: ClassItem[] }
     setOpenIndex(openIndex === idx ? null : idx);
   };
 
-  const handleToggleAssignments = async (year: number, section: string, enabled: boolean) => {
-    const key = `${year}-${section}`;
+  const handleToggleAssignments = async (year: number, section: string, subject: string, enabled: boolean) => {
+    const key = `${year}-${section}-${subject}`;
     setToggling(key);
 
     // Optimistic UI Update
@@ -49,7 +50,7 @@ export default function FacultyClassesList({ classes }: { classes: ClassItem[] }
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ year, section, enabled }),
+        body: JSON.stringify({ year, section, subject, enabled }),
       });
 
       if (!res.ok) {
@@ -72,7 +73,7 @@ export default function FacultyClassesList({ classes }: { classes: ClassItem[] }
 
         return (
           <div
-            key={`${cls.year}-${cls.section}`}
+            key={`${cls.year}-${cls.section}-${cls.subject}`}
             className="border border-slate-100 bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300"
           >
             {/* Accordion Header */}
@@ -86,16 +87,16 @@ export default function FacultyClassesList({ classes }: { classes: ClassItem[] }
                 </div>
                 <div>
                   <h3 className="font-bold text-slate-900 text-sm sm:text-base">
-                    Year {cls.year} — Section {cls.section}
+                    Year {cls.year} — Section {cls.section} — <span className="text-indigo-600">{cls.subject}</span>
                   </h3>
                   <p className="text-xs text-slate-400 font-medium">Student Directory</p>
                 </div>
               </div>
 
-              <div className="flex items-center space-x-3 sm:space-x-4">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                 {/* Enable Assignments Toggle */}
                 {(() => {
-                  const key = `${cls.year}-${cls.section}`;
+                  const key = `${cls.year}-${cls.section}-${cls.subject}`;
                   const isEnabled = !!assignmentsMap[key];
                   const isToggling = toggling === key;
                   return (
@@ -103,12 +104,12 @@ export default function FacultyClassesList({ classes }: { classes: ClassItem[] }
                       className="flex items-center space-x-2 bg-slate-100/50 hover:bg-slate-100 px-3 py-1.5 rounded-2xl transition-colors duration-200"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <span className="text-xs font-bold text-slate-600 select-none">Enable Assignments</span>
+                      <span className="text-xs font-bold text-slate-600 select-none">Enable</span>
                       <button
                         type="button"
                         role="switch"
                         aria-checked={isEnabled}
-                        onClick={() => handleToggleAssignments(cls.year, cls.section, !isEnabled)}
+                        onClick={() => handleToggleAssignments(cls.year, cls.section, cls.subject, !isEnabled)}
                         disabled={isToggling}
                         className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
                           isEnabled ? "bg-indigo-600" : "bg-slate-300"
@@ -131,7 +132,7 @@ export default function FacultyClassesList({ classes }: { classes: ClassItem[] }
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      window.location.href = `/api/faculty/download-submissions?year=${cls.year}&section=${cls.section}`;
+                      window.location.href = `/api/faculty/download-submissions?year=${cls.year}&section=${cls.section}&subject=${encodeURIComponent(cls.subject)}`;
                     }}
                     className="inline-flex items-center px-3 py-1.5 rounded-2xl text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 shadow-sm hover:shadow active:scale-[0.97] hover:scale-[1.02] transform transition-all duration-200 select-none"
                     title="Download all student submissions as a ZIP archive"
@@ -175,6 +176,45 @@ export default function FacultyClassesList({ classes }: { classes: ClassItem[] }
                     Download ZIP
                   </button>
                 )}
+
+                {/* Remove Class Button */}
+                <button
+                  type="button"
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    if (
+                      confirm(
+                        `Are you sure you want to remove the class: Year ${cls.year} - Section ${cls.section} - ${cls.subject}?\n\nThis will remove it from your dashboard but submissions remain stored.`
+                      )
+                    ) {
+                      try {
+                        const res = await fetch("/api/faculty/classes", {
+                          method: "DELETE",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            year: cls.year,
+                            section: cls.section,
+                            subject: cls.subject,
+                          }),
+                        });
+                        const data = await res.json();
+                        if (!res.ok) {
+                          throw new Error(data.message || "Failed to remove class");
+                        }
+                        window.location.reload();
+                      } catch (err: any) {
+                        alert(err.message || "Failed to remove class. Please try again.");
+                      }
+                    }
+                  }}
+                  className="inline-flex items-center px-3 py-1.5 rounded-2xl text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-100 shadow-sm active:scale-[0.97] transition-all duration-200 select-none"
+                  title="Remove class"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Remove
+                </button>
 
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700">
                   {cls.students.length} students

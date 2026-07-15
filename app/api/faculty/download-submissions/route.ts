@@ -133,6 +133,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const yearStr = searchParams.get("year");
     const section = searchParams.get("section");
+    const subject = searchParams.get("subject");
 
     if (!yearStr || !section) {
       return NextResponse.json({ success: false, message: "Missing required fields" }, { status: 400 });
@@ -145,14 +146,14 @@ export async function GET(req: NextRequest) {
 
     // Verify this class is indeed taught by this faculty member
     const matchedTeaching = user.teaching?.find(
-      (t) => t.year === year && t.section === section
+      (t) => t.year === year && t.section === section && (!subject || t.subject.toLowerCase() === subject.toLowerCase())
     );
 
     if (!matchedTeaching) {
       return NextResponse.json({ success: false, message: "You do not teach this class" }, { status: 403 });
     }
 
-    // Fetch all submissions for this class section
+    // Fetch all submissions for this class section & subject
     const submissions = await Submission.find({
       facultyId: user._id,
       studentYear: year,

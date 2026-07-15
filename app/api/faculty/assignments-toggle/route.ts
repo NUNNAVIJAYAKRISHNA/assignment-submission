@@ -12,17 +12,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
     }
 
-    const { year, section, enabled } = await req.json();
+    const { year, section, subject, enabled } = await req.json();
 
     if (year === undefined || section === undefined || enabled === undefined) {
       return NextResponse.json({ success: false, message: "Missing required fields" }, { status: 400 });
     }
 
     // Update the teaching array element for this faculty
+    const elemFilter: any = { "elem.year": year, "elem.section": section };
+    if (subject) {
+      elemFilter["elem.subject"] = subject;
+    }
+
     const result = await User.updateOne(
       { _id: user._id },
       { $set: { "teaching.$[elem].assignmentsEnabled": enabled } },
-      { arrayFilters: [{ "elem.year": year, "elem.section": section }] }
+      { arrayFilters: [elemFilter] }
     );
 
     if (result.matchedCount === 0) {
