@@ -1,35 +1,19 @@
-const nodemailer = require("nodemailer");
 require("dotenv").config();
+const { sendVerificationEmail } = require("../utils/sendEmail");
 
-async function testEmail() {
-  console.log("USER:", process.env.EMAIL_USER);
-  console.log("PASS:", process.env.EMAIL_PASS ? "PRESENT" : "MISSING");
-
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
-    }
-  });
+async function runTest() {
+  console.log("BASE_URL:", process.env.BASE_URL);
+  console.log("EMAIL_USER:", process.env.EMAIL_USER);
 
   try {
-    await transporter.verify();
-    console.log("TRANSPORTER VERIFICATION SUCCESSFUL");
-
-    const info = await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: process.env.EMAIL_USER, // send to self
-      subject: "ClassVault SMTP Test",
-      text: "This is a test email from ClassVault setup."
-    });
-
-    console.log("EMAIL SENT SUCCESSFUL:", info.messageId);
+    const testToken = "test_verification_token_123456";
+    await sendVerificationEmail(process.env.EMAIL_USER, testToken);
+    console.log("VERIFICATION EMAIL DISPATCHED SUCCESSFULLY!");
     process.exit(0);
   } catch (err) {
-    console.error("EMAIL SENDING FAILED:", err);
+    console.error("VERIFICATION EMAIL DISPATCH FAILED:", err);
     process.exit(1);
   }
 }
 
-testEmail();
+runTest();

@@ -20,7 +20,14 @@ export async function POST(req: NextRequest) {
     user.verificationTokenExpires = new Date(Date.now() + 3600000); // 1 hour
     
     await user.save();
-    await sendVerificationEmail(user.email, token);
+    
+    try {
+      await sendVerificationEmail(user.email, token);
+    } catch (emailError: any) {
+      console.error("Failed to send verification email, rolling back registration:", emailError);
+      await User.deleteOne({ _id: user._id }); // Rollback database record
+      throw new Error(`Failed to send verification email: ${emailError.message || emailError}. Registration cancelled.`);
+    }
     
     return NextResponse.json({
       success: true,
