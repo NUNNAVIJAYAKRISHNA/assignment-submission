@@ -51,23 +51,30 @@ export function middleware(req: NextRequest) {
     pathname.startsWith("/facultyDashboard") ||
     (pathname.startsWith("/api/faculty") && pathname !== "/api/faculty/register");
 
-  // Auth pages (where logged-in users should be redirected away)
-  const isAuthPage =
+  // Public pages that unauthenticated users can visit
+  const isPublicPage =
+    pathname === "/" ||
     pathname === "/login" ||
     pathname === "/registration" ||
     pathname === "/faculty/register";
 
-  // Case 1: User is NOT logged in. Redirect to /login if trying to access any path other than auth pages.
+  // Auth forms where logged-in users should be redirected away from
+  const isAuthFormPage =
+    pathname === "/login" ||
+    pathname === "/registration" ||
+    pathname === "/faculty/register";
+
+  // Case 1: User is NOT logged in. Redirect to /login if trying to access any private path.
   if (!decoded) {
-    if (!isAuthPage) {
+    if (!isPublicPage) {
       const loginUrl = new URL("/login", req.url);
       return NextResponse.redirect(loginUrl);
     }
     return NextResponse.next();
   }
 
-  // Case 2: User IS logged in but trying to access login/register pages or the homepage (/)
-  if (isAuthPage || pathname === "/") {
+  // Case 2: User IS logged in but trying to access login/register forms
+  if (isAuthFormPage) {
     if (decoded.role === "faculty") {
       return NextResponse.redirect(new URL("/facultyDashboard", req.url));
     }
