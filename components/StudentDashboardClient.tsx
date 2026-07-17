@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import AitamLogo from "./AitamLogo";
 
 interface Faculty {
   _id: string;
@@ -238,22 +239,8 @@ export default function StudentDashboardClient({
     <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row text-slate-800 font-sans">
       {/* --- DESKTOP SIDEBAR --- */}
       <aside className="hidden md:flex flex-col w-64 bg-slate-900 text-white shrink-0 border-r border-slate-800">
-        <div className="h-16 flex items-center px-6 border-b border-slate-800 gap-2">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            stroke="currentColor"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            className="w-8 h-8 text-white p-1.5 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl"
-            viewBox="0 0 24 24"
-          >
-            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
-          </svg>
-          <span className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
-            AssignHub
-          </span>
+        <div className="h-16 flex items-center px-6 border-b border-slate-800">
+          <AitamLogo lightMode={true} className="w-8 h-8" />
         </div>
 
         {/* User Mini Profile */}
@@ -317,21 +304,7 @@ export default function StudentDashboardClient({
           </svg>
         </button>
 
-        <span className="font-extrabold text-lg tracking-tight bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent flex items-center gap-1.5">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            stroke="currentColor"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            className="w-6 h-6 text-white p-1 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-lg"
-            viewBox="0 0 24 24"
-          >
-            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
-          </svg>
-          AssignHub
-        </span>
+        <AitamLogo lightMode={true} className="w-6 h-6" />
 
         <Link
           href="/api/logout"
@@ -480,7 +453,7 @@ export default function StudentDashboardClient({
                 <div className="flex items-center justify-between">
                   <div>
                     <h2 className="text-xl font-bold text-slate-900 tracking-tight">Active Faculty & Courses</h2>
-                    <p className="text-sm text-slate-500 mt-0.5">Submit your video assignments to the respective subject teachers.</p>
+                    <p className="text-sm text-slate-500 mt-0.5">Submit your assignments to the respective subject teachers.</p>
                   </div>
                   <div className="flex items-center space-x-2 bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-full text-xs font-semibold">
                     <span>Total Courses: {facultyList.length}</span>
@@ -624,7 +597,7 @@ export default function StudentDashboardClient({
                   </div>
                   <h3 className="text-lg font-bold text-slate-800">No Submissions Found</h3>
                   <p className="text-slate-500 max-w-sm mx-auto mt-2 text-sm">
-                    You haven&apos;t submitted any video assignments yet. Go to &quot;My Courses&quot; to submit your first assignment.
+                    You haven&apos;t submitted any assignments yet. Go to &quot;My Courses&quot; to submit your first assignment.
                   </p>
                 </div>
               ) : (
@@ -896,7 +869,7 @@ export default function StudentDashboardClient({
                   required
                   value={submissionForm.title}
                   onChange={(e) => setSubmissionForm({ ...submissionForm, title: e.target.value })}
-                  placeholder="e.g. Video Presentation - Week 3"
+                  placeholder="e.g. Assignment Submission - Week 3"
                   className="w-full h-10 px-3 rounded-xl border border-slate-200 text-slate-800 text-sm focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all duration-200"
                 />
               </div>
@@ -904,7 +877,7 @@ export default function StudentDashboardClient({
               {/* Video URL */}
               <div className="flex flex-col">
                 <label htmlFor="modal-videoUrl" className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
-                  Video Link (Drive / YouTube / OneDrive)
+                  Submission Link (Drive / OneDrive / GitHub / YouTube)
                 </label>
                 <input
                   id="modal-videoUrl"

@@ -1,4 +1,4 @@
-# AssignHub — Assignment Submission Platform
+# ClassVault — Assignment Submission Platform
 
 A modern, secure, and responsive web-based platform for managing academic assignment submissions. Built with Next.js 15 (App Router), React 19, TypeScript, and MongoDB.
 
@@ -130,7 +130,7 @@ assignment-submission
 
 ### 2. Dynamically Controlled Submission Flow
 * Faculty members have full administrative access on their dashboard to toggle the submission window (`assignmentsEnabled`) for each specific class section (e.g. Year 3 - Sec B) they teach.
-* Students can only submit video assignment payloads if the respective faculty member has enabled submissions for their class section.
+* Students can only submit assignment payloads if the respective faculty member has enabled submissions for their class section.
 
 ### 3. Submissions ZIP Downloader with Google Drive Integration
 * The download endpoint (`/api/faculty/download-submissions`) queries all submissions for a selected year and section.

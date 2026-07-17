@@ -9,7 +9,7 @@ const plusJakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata = {
-  title: "AssignHub - Academic Assignment Submission",
+  title: "ClassVault - Academic Assignment Submission",
   description: "A web-based platform for managing academic assignment submissions.",
 };
 

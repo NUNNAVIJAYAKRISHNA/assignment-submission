@@ -3,7 +3,11 @@ import { cookies } from "next/headers";
 import connectDB from "./db";
 import User, { IUser } from "../models/userModel";
 
-const JWT_SECRET = process.env.JWT_SECRET || "secret_key";
+const JWT_SECRET = process.env.JWT_SECRET || (process.env.NODE_ENV === "production" ? "" : "secret_key");
+
+if (!JWT_SECRET) {
+  throw new Error("Please define the JWT_SECRET environment variable inside your environment configuration.");
+}
 
 export interface SessionUser {
   _id: string;

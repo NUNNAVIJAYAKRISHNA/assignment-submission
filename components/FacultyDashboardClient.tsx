@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import FacultyClassesList from "./FacultyClassesList";
+import AitamLogo from "./AitamLogo";
 
 interface Student {
   _id: string;
@@ -174,22 +175,8 @@ export default function FacultyDashboardClient({
     <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row text-slate-800 font-sans">
       {/* --- DESKTOP SIDEBAR --- */}
       <aside className="hidden md:flex flex-col w-64 bg-slate-900 text-white shrink-0 border-r border-slate-800">
-        <div className="h-16 flex items-center px-6 border-b border-slate-800 gap-2">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            stroke="currentColor"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            className="w-8 h-8 text-white p-1.5 bg-gradient-to-br from-indigo-50 to-violet-600 rounded-xl"
-            viewBox="0 0 24 24"
-          >
-            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
-          </svg>
-          <span className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
-            AssignHub
-          </span>
+        <div className="h-16 flex items-center px-6 border-b border-slate-800">
+          <AitamLogo lightMode={true} className="w-8 h-8" />
         </div>
 
         {/* User Mini Profile */}
@@ -253,21 +240,7 @@ export default function FacultyDashboardClient({
           </svg>
         </button>
 
-        <span className="font-extrabold text-lg tracking-tight bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent flex items-center gap-1.5">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            stroke="currentColor"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            className="w-6 h-6 text-white p-1 bg-gradient-to-br from-indigo-50 to-violet-600 rounded-lg"
-            viewBox="0 0 24 24"
-          >
-            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
-          </svg>
-          AssignHub
-        </span>
+        <AitamLogo lightMode={true} className="w-6 h-6" />
 
         <Link
           href="/api/logout"

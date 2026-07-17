@@ -1,4 +1,6 @@
 import Link from "next/link";
+import VirtualUrlBar from "../components/VirtualUrlBar";
+import AitamLogo from "../components/AitamLogo";
 
 export default function HomePage() {
   return (
@@ -6,19 +8,7 @@ export default function HomePage() {
       <header className="text-slate-600 body-font bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-50">
         <div className="container mx-auto flex flex-wrap p-5 flex-col md:flex-row items-center">
           <Link href="/" className="flex title-font font-medium items-center text-slate-900 mb-4 md:mb-0">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              className="w-10 h-10 text-white p-2 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-2xl shadow-md shadow-indigo-200"
-              viewBox="0 0 24 24"
-            >
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
-            </svg>
-            <span className="ml-3 text-xl font-bold tracking-tight text-slate-900">AssignHub</span>
+            <AitamLogo />
           </Link>
           <nav className="md:ml-auto flex flex-wrap items-center text-base justify-center gap-6">
             <span className="hover:text-indigo-600 cursor-pointer text-sm font-semibold transition-colors">About</span>
@@ -45,7 +35,7 @@ export default function HomePage() {
           </h1>
           
           <p className="text-lg text-slate-500 max-w-xl mx-auto relative">
-            A unified submission environment. Students submit video assignments directly, and faculty members manage directories, classrooms, and grades in a dashboard.
+            A unified submission environment. Students submit assignments directly, and faculty members manage directories, classrooms, and grades in a dashboard.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center relative z-10">
@@ -55,18 +45,15 @@ export default function HomePage() {
             >
               Register as Student
             </Link>
-            <Link
-              href="/faculty/register"
-              className="inline-flex items-center justify-center px-6 py-3 rounded-xl text-sm font-semibold text-indigo-700 bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 shadow-sm transition-all active:scale-[0.98]"
-            >
-              Educator Portal
-            </Link>
           </div>
+
+          <VirtualUrlBar />
+
         </div>
       </main>
 
       <footer className="py-8 text-center text-xs text-slate-400 bg-white border-t border-slate-100">
-        <p>&copy; 2026 AssignHub. All rights reserved.</p>
+        <p>&copy; 2026 ClassVault. All rights reserved.</p>
       </footer>
     </div>
   );

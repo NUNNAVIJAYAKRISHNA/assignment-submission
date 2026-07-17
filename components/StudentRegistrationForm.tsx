@@ -74,7 +74,7 @@ export default function StudentRegistrationForm() {
           </svg>
         </div>
         <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight text-center">Student Registration</h1>
-        <p className="text-sm text-slate-500 mt-2 text-center max-w-sm">Create your account to start submitting video assignments to your courses.</p>
+        <p className="text-sm text-slate-500 mt-2 text-center max-w-sm">Create your account to start submitting assignments to your courses.</p>
       </div>
 
       {error && (
@@ -299,17 +299,11 @@ export default function StudentRegistrationForm() {
         </div>
       </form>
 
-      <div className="mt-8 pt-6 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-slate-500 relative">
+      <div className="mt-8 pt-6 border-t border-slate-100 flex justify-center items-center text-sm text-slate-500 relative">
         <div>
           Already have an account?{" "}
           <Link href="/login" className="font-semibold text-indigo-600 hover:text-indigo-700 hover:underline transition-colors duration-200">
             Sign in
-          </Link>
-        </div>
-        <div>
-          Are you a teacher?{" "}
-          <Link href="/faculty/register" className="font-semibold text-indigo-600 hover:text-indigo-700 hover:underline transition-colors duration-200">
-            Faculty Register
           </Link>
         </div>
       </div>

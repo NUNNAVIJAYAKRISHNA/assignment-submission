@@ -50,7 +50,7 @@ export default function LoginForm() {
           </svg>
         </div>
         <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight text-center">Login</h1>
-        <p className="text-xs text-slate-500 mt-1 text-center">Access your AssignHub account</p>
+        <p className="text-xs text-slate-500 mt-1 text-center">Access your ClassVault account</p>
       </div>
 
       {error && (

@@ -134,6 +134,7 @@ export async function GET(req: NextRequest) {
     const yearStr = searchParams.get("year");
     const section = searchParams.get("section");
     const subject = searchParams.get("subject");
+    const format = searchParams.get("format");
 
     if (!yearStr || !section) {
       return NextResponse.json({ success: false, message: "Missing required fields" }, { status: 400 });
@@ -163,6 +164,38 @@ export async function GET(req: NextRequest) {
 
     if (submissions.length === 0) {
       return NextResponse.json({ success: false, message: "No submissions found for this class section." }, { status: 404 });
+    }
+
+    // Export submissions as an Excel-compatible CSV sheet
+    if (format === "excel" || format === "csv") {
+      const escapeCSV = (val: string) => {
+        if (!val) return '""';
+        return `"${val.replace(/"/g, '""')}"`;
+      };
+
+      let csvContent = "\uFEFF"; // UTF-8 Byte Order Mark for Excel
+      csvContent += "Roll Number,Student Name,Subject,Assignment Title,Submission Link,Submitted On,Description\n";
+
+      submissions.forEach((sub) => {
+        csvContent += `${escapeCSV(sub.studentRollNumber || "N/A")},`;
+        csvContent += `${escapeCSV(sub.studentName)},`;
+        csvContent += `${escapeCSV(sub.subject)},`;
+        csvContent += `${escapeCSV(sub.title)},`;
+        csvContent += `${escapeCSV(sub.videoUrl)},`;
+        csvContent += `${escapeCSV(sub.createdAt.toLocaleString())},`;
+        csvContent += `${escapeCSV(sub.description || "")}\n`;
+      });
+
+      const safeSubject = matchedTeaching.subject.replace(/[^a-zA-Z0-9_-]/g, "_");
+      const csvName = `submissions_Y${year}_Sec${section}_${safeSubject}_links.csv`;
+
+      return new Response(csvContent, {
+        status: 200,
+        headers: {
+          "Content-Type": "text/csv; charset=utf-8",
+          "Content-Disposition": `attachment; filename="${csvName}"`,
+        },
+      });
     }
 
     // Prepare files list for ZIP by fetching submission links concurrently

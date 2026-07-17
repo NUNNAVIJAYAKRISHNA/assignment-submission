@@ -75,7 +75,7 @@ export default function SubmitAssignmentForm({ faculty, user }: SubmitAssignment
         </div>
         <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight mb-3">Assignment Submitted</h1>
         <p className="text-sm text-slate-500 max-w-sm mx-auto mb-6">
-          Your video assignment for <strong className="text-slate-800">{matchedSubject}</strong> has been successfully submitted to <strong className="text-slate-800">{faculty.fullname}</strong>.
+          Your assignment for <strong className="text-slate-800">{matchedSubject}</strong> has been successfully submitted to <strong className="text-slate-800">{faculty.fullname}</strong>.
         </p>
         <div className="flex gap-4 justify-center">
           <Link
@@ -103,7 +103,7 @@ export default function SubmitAssignmentForm({ faculty, user }: SubmitAssignment
         </div>
         <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight text-center">Submit Assignment</h1>
         <p className="text-sm text-slate-500 mt-2 text-center max-w-md">
-          Uploading video assignment for <span className="font-semibold text-indigo-600">{matchedSubject}</span> to <span className="font-semibold text-indigo-600">{faculty.fullname}</span>
+          Uploading assignment for <span className="font-semibold text-indigo-600">{matchedSubject}</span> to <span className="font-semibold text-indigo-600">{faculty.fullname}</span>
         </p>
       </div>
 
@@ -122,21 +122,21 @@ export default function SubmitAssignmentForm({ faculty, user }: SubmitAssignment
             required
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="e.g., Video Presentation - Week 3"
+            placeholder="e.g., Assignment Submission - Week 3"
             className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-slate-50/50 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 transition-all duration-200 text-sm"
           />
         </div>
 
         {/* Video Link */}
         <div className="flex flex-col">
-          <label htmlFor="videoUrl" className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Video Link (Google Drive / YouTube / OneDrive)</label>
+          <label htmlFor="videoUrl" className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Submission Link (Google Drive / OneDrive / GitHub / YouTube)</label>
           <input
             id="videoUrl"
             type="url"
             required
             value={videoUrl}
             onChange={(e) => setVideoUrl(e.target.value)}
-            placeholder="https://youtube.com/watch?v=... or Drive shared link"
+            placeholder="https://drive.google.com/... or any shared link"
             className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-slate-50/50 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 transition-all duration-200 text-sm"
           />
         </div>
