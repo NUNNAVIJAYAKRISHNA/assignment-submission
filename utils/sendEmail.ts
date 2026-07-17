@@ -1,4 +1,8 @@
 import nodemailer from "nodemailer";
+import dns from "dns";
+
+// Force Node.js to prefer IPv4 DNS resolution first to bypass cloud IPv6 unreachable issues (e.g. Render)
+dns.setDefaultResultOrder("ipv4first");
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
