@@ -9,7 +9,10 @@ const transporter = nodemailer.createTransport({
 });
 
 export const sendVerificationEmail = async (email: string, token: string): Promise<void> => {
-  const baseUrl = process.env.BASE_URL || "http://localhost:3000";
+  const baseUrl = process.env.BASE_URL || (process.env.NODE_ENV === "production" ? "" : "http://localhost:3000");
+  if (!baseUrl) {
+    throw new Error("Please define the BASE_URL environment variable inside your environment configuration.");
+  }
   const verificationLink = `${baseUrl}/verify-email?token=${token}`;
   await transporter.sendMail({
     from: process.env.EMAIL_USER,

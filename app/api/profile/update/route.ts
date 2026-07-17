@@ -44,9 +44,9 @@ export async function PUT(req: NextRequest) {
       
       if (semester !== undefined && semester !== null) {
         const semNum = Number(semester);
-        if (isNaN(semNum) || semNum <= 0) {
+        if (isNaN(semNum) || semNum < 1 || semNum > 2) {
           return NextResponse.json(
-            { success: false, message: "Invalid semester" },
+            { success: false, message: "Semester must be 1 or 2" },
             { status: 400 }
           );
         }

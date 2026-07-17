@@ -253,11 +253,11 @@ export default function StudentRegistrationForm() {
               id="semester"
               type="number"
               min="1"
-              max="8"
+              max="2"
               required
               value={semester}
               onChange={(e) => setSemester(e.target.value)}
-              placeholder="1 - 8"
+              placeholder="1 - 2"
               className="w-full h-11 pl-11 pr-4 rounded-xl border border-slate-200 bg-slate-50/50 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 transition-all duration-200 text-sm"
             />
           </div>

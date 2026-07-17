@@ -13,6 +13,9 @@ export async function POST(req: NextRequest) {
     body.role = "student";
 
     const userData = createUser(body);
+    if (userData.semester !== null && (userData.semester < 1 || userData.semester > 2)) {
+      return NextResponse.json({ success: false, message: "Semester must be 1 or 2" }, { status: 400 });
+    }
     const user = new User(userData);
     
     const token = crypto.randomBytes(32).toString("hex");
