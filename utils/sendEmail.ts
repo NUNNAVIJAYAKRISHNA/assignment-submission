@@ -7,6 +7,8 @@ dns.setDefaultResultOrder("ipv4first");
 const getTransporter = () => {
   return nodemailer.createTransport({
     service: "gmail",
+    connectionTimeout: 5000,
+    socketTimeout: 5000,
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS
@@ -45,6 +47,8 @@ export const sendVerificationEmail = async (email: string, token: string): Promi
           host: "smtp-relay.brevo.com",
           port: 587,
           secure: false,
+          connectionTimeout: 5000,
+          socketTimeout: 5000,
           auth: {
             user: senderEmail,
             pass: brevoApiKey
