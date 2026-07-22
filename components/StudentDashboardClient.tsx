@@ -604,6 +604,18 @@ export default function StudentDashboardClient({
                 <div className="grid grid-cols-1 gap-6">
                   {submissions.map((sub) => {
                     const facultyName = typeof sub.facultyId === "object" ? sub.facultyId.fullname : "Assigned Faculty";
+                    const facultyIdStr = typeof sub.facultyId === "object" ? sub.facultyId._id : sub.facultyId;
+                    
+                    const matchedFaculty = facultyList.find((f) => f._id === facultyIdStr);
+                    const matchedTeaching = matchedFaculty?.teaching?.find(
+                      (t) =>
+                        t.year === currentUser.yearOfStudy &&
+                        (t.section || "").toUpperCase() === (currentUser.section || "").toUpperCase() &&
+                        (t.subject || "").toLowerCase() === (sub.subject || "").toLowerCase()
+                    );
+                    
+                    const isUpdateEnabled = matchedTeaching ? !!matchedTeaching.assignmentsEnabled : false;
+
                     return (
                       <div
                         key={sub._id}
@@ -647,15 +659,28 @@ export default function StudentDashboardClient({
 
                         {/* Edit CTA */}
                         <div className="shrink-0 flex items-center">
-                          <button
-                            onClick={() => openEditSubmission(sub)}
-                            className="w-full md:w-auto inline-flex items-center justify-center px-4 py-2 border border-indigo-200 text-indigo-600 rounded-xl text-xs font-bold hover:bg-indigo-50 transition-colors"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
-                            Update Submission
-                          </button>
+                          {isUpdateEnabled ? (
+                            <button
+                              onClick={() => openEditSubmission(sub)}
+                              className="w-full md:w-auto inline-flex items-center justify-center px-4 py-2 border border-indigo-200 text-indigo-600 rounded-xl text-xs font-bold hover:bg-indigo-50 transition-colors"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                              Update Submission
+                            </button>
+                          ) : (
+                            <button
+                              disabled
+                              className="w-full md:w-auto inline-flex items-center justify-center px-4 py-2 border border-slate-200 text-slate-400 bg-slate-50/50 rounded-xl text-xs font-bold cursor-not-allowed opacity-60"
+                              title="Submissions are currently locked for this class by the faculty"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                              </svg>
+                              Locked by Faculty
+                            </button>
+                          )}
                         </div>
                       </div>
                     );

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "../../../../lib/db";
+import User from "../../../../models/userModel";
 import Submission from "../../../../models/submissionModel";
 import { getUserSession } from "../../../../lib/auth";
 
@@ -33,6 +34,36 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json(
         { success: false, message: "Submission not found or unauthorized" },
         { status: 404 }
+      );
+    }
+
+    // Verify if assignments are enabled for this class by the faculty member
+    const faculty = await User.findById(submission.facultyId);
+    if (!faculty || faculty.role !== "faculty") {
+      return NextResponse.json(
+        { success: false, message: "Associated faculty member not found" },
+        { status: 404 }
+      );
+    }
+
+    const matchedTeaching = faculty.teaching?.find(
+      (t) =>
+        t.year === submission.studentYear &&
+        t.section.toUpperCase() === submission.studentSection.toUpperCase() &&
+        t.subject.toLowerCase() === submission.subject.toLowerCase()
+    );
+
+    if (!matchedTeaching) {
+      return NextResponse.json(
+        { success: false, message: "No class configuration found for this submission" },
+        { status: 400 }
+      );
+    }
+
+    if (!matchedTeaching.assignmentsEnabled) {
+      return NextResponse.json(
+        { success: false, message: "Submissions are currently locked/disabled for this class by the faculty" },
+        { status: 403 }
       );
     }
 
