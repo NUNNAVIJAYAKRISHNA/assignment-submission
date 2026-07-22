@@ -31,6 +31,7 @@ export function middleware(req: NextRequest) {
     pathname.startsWith("/api/register") ||
     pathname.startsWith("/api/faculty/register") ||
     pathname.startsWith("/api/logout") ||
+    pathname.startsWith("/api/debug") ||
     pathname.includes(".") || // files like favicon.ico, images
     pathname === "/verify-email";
 
