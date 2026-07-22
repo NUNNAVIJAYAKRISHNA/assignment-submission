@@ -83,26 +83,51 @@ async function fetchSubmissionFile(
       };
     }
 
-    // Try to guess extension from content-type or filename
+    // Guess file extension by trying multiple strategies
     let extension = "bin";
-    if (contentType.includes("video/mp4")) extension = "mp4";
-    else if (contentType.includes("video/quicktime")) extension = "mov";
-    else if (contentType.includes("video/x-matroska")) extension = "mkv";
-    else if (contentType.includes("application/pdf")) extension = "pdf";
-    else if (contentType.includes("image/")) {
-      const imgExt = contentType.split("/")[1];
-      extension = imgExt ? imgExt.split(";")[0] : "png";
-    } else if (contentType.includes("application/vnd.openxmlformats-officedocument.wordprocessingml.document")) extension = "docx";
-    else if (contentType.includes("application/msword")) extension = "doc";
-    else {
-      // Guess from url
-      try {
-        const urlPath = new URL(url).pathname;
-        const lastDot = urlPath.lastIndexOf(".");
-        if (lastDot !== -1 && urlPath.length - lastDot <= 5) {
-          extension = urlPath.substring(lastDot + 1);
-        }
-      } catch (_) {}
+
+    // 1. Try to guess from Content-Disposition header (most reliable for original names)
+    const contentDisposition = res.headers.get("content-disposition") || "";
+    let filenameFromHeader = "";
+    if (contentDisposition) {
+      const filenameMatch = contentDisposition.match(/filename\*?=(?:UTF-8'')?["']?([^"';]+)["']?/i);
+      if (filenameMatch && filenameMatch[1]) {
+        filenameFromHeader = decodeURIComponent(filenameMatch[1]);
+      }
+    }
+
+    if (filenameFromHeader) {
+      const lastDot = filenameFromHeader.lastIndexOf(".");
+      if (lastDot !== -1 && filenameFromHeader.length - lastDot <= 10) {
+        extension = filenameFromHeader.substring(lastDot + 1).toLowerCase();
+      }
+    }
+
+    // 2. Fallback to guessing from Content-Type if header guess is missing or generic
+    if (extension === "bin") {
+      if (contentType.includes("video/mp4")) extension = "mp4";
+      else if (contentType.includes("video/quicktime")) extension = "mov";
+      else if (contentType.includes("video/x-matroska")) extension = "mkv";
+      else if (contentType.includes("application/pdf") || contentType.includes("application/x-pdf") || contentType.includes("text/pdf")) extension = "pdf";
+      else if (contentType.includes("application/vnd.openxmlformats-officedocument.presentationml.presentation")) extension = "pptx";
+      else if (contentType.includes("application/vnd.ms-powerpoint")) extension = "ppt";
+      else if (contentType.includes("application/vnd.openxmlformats-officedocument.wordprocessingml.document")) extension = "docx";
+      else if (contentType.includes("application/msword")) extension = "doc";
+      else if (contentType.includes("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")) extension = "xlsx";
+      else if (contentType.includes("application/vnd.ms-excel")) extension = "xls";
+      else if (contentType.includes("image/")) {
+        const imgExt = contentType.split("/")[1];
+        extension = imgExt ? imgExt.split(";")[0] : "png";
+      } else {
+        // 3. Fallback to guessing from the URL path
+        try {
+          const urlPath = new URL(url).pathname;
+          const lastDot = urlPath.lastIndexOf(".");
+          if (lastDot !== -1 && urlPath.length - lastDot <= 6) {
+            extension = urlPath.substring(lastDot + 1).toLowerCase();
+          }
+        } catch (_) {}
+      }
     }
 
     const arrayBuffer = await res.arrayBuffer();
