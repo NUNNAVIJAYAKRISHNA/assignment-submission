@@ -210,7 +210,7 @@ export default function FacultyDashboardClient({
 
         {/* Sidebar Footer Logout */}
         <div className="p-4 border-t border-slate-800">
-          <Link
+          <a
             href="/api/logout"
             className="w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-sm font-semibold text-rose-400 hover:bg-rose-950/20 hover:text-rose-300 transition-colors duration-200"
           >
@@ -225,7 +225,7 @@ export default function FacultyDashboardClient({
               <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>
             <span>Logout</span>
-          </Link>
+          </a>
         </div>
       </aside>
 
@@ -242,12 +242,12 @@ export default function FacultyDashboardClient({
 
         <AitamLogo lightMode={true} className="w-6 h-6" />
 
-        <Link
+        <a
           href="/api/logout"
           className="text-rose-400 hover:text-rose-300 font-semibold text-xs tracking-wide bg-rose-950/20 px-3 py-1.5 rounded-lg flex items-center gap-1 border border-rose-900/30"
         >
           Logout
-        </Link>
+        </a>
       </div>
 
       {/* Mobile Drawer Overlay */}
@@ -304,7 +304,7 @@ export default function FacultyDashboardClient({
             </nav>
 
             <div className="p-4 border-t border-slate-800">
-              <Link
+              <a
                 href="/api/logout"
                 className="w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-sm font-semibold text-rose-400 hover:bg-rose-950/20 hover:text-rose-300 transition-colors"
               >
@@ -319,7 +319,7 @@ export default function FacultyDashboardClient({
                   <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
                 <span>Logout</span>
-              </Link>
+              </a>
             </div>
           </div>
         </div>
