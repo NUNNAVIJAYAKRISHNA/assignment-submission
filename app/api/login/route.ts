@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import connectDB from "../../../lib/db";
 import { loginUser } from "../../../utils/loginUser";
 import { signToken } from "../../../lib/auth";
@@ -11,13 +12,9 @@ export async function POST(req: NextRequest) {
 
     // Set jwt token in cookie
     const token = signToken(user);
-    const response = NextResponse.json({
-      success: true,
-      role: user.role,
-      redirectUrl: user.role === "student" ? "/studentDashboard" : "/facultyDashboard"
-    });
-
-    response.cookies.set({
+    
+    const cookieStore = await cookies();
+    cookieStore.set({
       name: "session",
       value: token,
       httpOnly: true,
@@ -27,7 +24,11 @@ export async function POST(req: NextRequest) {
       maxAge: 60 * 60 * 24 // 1 day
     });
 
-    return response;
+    return NextResponse.json({
+      success: true,
+      role: user.role,
+      redirectUrl: user.role === "student" ? "/studentDashboard" : "/facultyDashboard"
+    });
   } catch (error: any) {
     console.error("Login API Error:", error);
     return NextResponse.json(
