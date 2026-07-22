@@ -2,6 +2,8 @@
 
 A modern, secure, and responsive web-based platform for managing academic assignment submissions. Built with Next.js 15 (App Router), React 19, TypeScript, and MongoDB.
 
+🔗 **Live Deployment:** [https://assignment-submission-gules.vercel.app/](https://assignment-submission-gules.vercel.app/)
+
 Students can easily submit assignments (e.g. video links, Google Drive files), while faculty members can manage classrooms, toggle submission availability, and download student submissions in bulk as a structured ZIP file.
 
 ---
