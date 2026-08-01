@@ -30,22 +30,7 @@ const getTransporter = () => {
   });
 };
 
-export const sendVerificationEmail = async (email: string, token: string): Promise<void> => {
-  const baseUrl = process.env.BASE_URL || (process.env.NODE_ENV === "production" ? "" : "http://localhost:3000");
-  if (!baseUrl) {
-    throw new Error("Please define the BASE_URL environment variable inside your environment configuration.");
-  }
-  const verificationLink = `${baseUrl}/verify-email?token=${token}`;
-
-  const htmlContent = `
-    <h3>Email Verification</h3>
-    <p>Click the link below to verify your account:</p>
-    <a href="${verificationLink}">
-      Verify Email
-    </a>
-    <p>This link expires in 1 hour.</p>
-  `;
-
+async function dispatchEmail(email: string, subject: string, htmlContent: string): Promise<void> {
   let smtpErrorDetail: string | null = null;
   let brevoErrorDetail: string | null = null;
   let resendErrorDetail: string | null = null;
@@ -53,15 +38,15 @@ export const sendVerificationEmail = async (email: string, token: string): Promi
   // 1. PRIORITY 1: Primary Nodemailer SMTP (Gmail or custom SMTP)
   if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
     try {
-      console.log("Attempting primary email dispatch via Nodemailer SMTP...");
+      console.log(`Attempting primary email dispatch via Nodemailer SMTP for subject "${subject}"...`);
       const sender = process.env.EMAIL_USER;
       await getTransporter().sendMail({
         from: `ClassVault <${sender}>`,
         to: email,
-        subject: "Verify your email",
+        subject,
         html: htmlContent
       });
-      console.log(`[Nodemailer SMTP] Verification email sent successfully to ${email}`);
+      console.log(`[Nodemailer SMTP] Email sent successfully to ${email}`);
       return;
     } catch (smtpErr: any) {
       smtpErrorDetail = smtpErr.message || String(smtpErr);
@@ -93,11 +78,11 @@ export const sendVerificationEmail = async (email: string, token: string): Promi
         await brevoTransporter.sendMail({
           from: `ClassVault <${senderEmail}>`,
           to: email,
-          subject: "Verify your email",
+          subject,
           html: htmlContent
         });
 
-        console.log(`[Brevo SMTP Relay] Verification email sent successfully to ${email}`);
+        console.log(`[Brevo SMTP Relay] Email sent successfully to ${email}`);
         return;
       } catch (err: any) {
         brevoErrorDetail = err.message || String(err);
@@ -117,13 +102,13 @@ export const sendVerificationEmail = async (email: string, token: string): Promi
           body: JSON.stringify({
             sender: { name: "ClassVault", email: senderEmail },
             to: [{ email }],
-            subject: "Verify your email",
+            subject,
             htmlContent
           })
         });
 
         if (res.ok) {
-          console.log(`[Brevo API] Verification email sent successfully to ${email}`);
+          console.log(`[Brevo API] Email sent successfully to ${email}`);
           return;
         }
 
@@ -150,13 +135,13 @@ export const sendVerificationEmail = async (email: string, token: string): Promi
         body: JSON.stringify({
           from: fromAddress,
           to: email,
-          subject: "Verify your email",
+          subject,
           html: htmlContent
         })
       });
 
       if (res.ok) {
-        console.log(`[Resend API] Verification email sent successfully to ${email}`);
+        console.log(`[Resend API] Email sent successfully to ${email}`);
         return;
       }
 
@@ -176,8 +161,47 @@ export const sendVerificationEmail = async (email: string, token: string): Promi
   ].filter(Boolean).join("; ");
 
   if (errors) {
-    throw new Error(`Failed to send verification email. Details: ${errors}`);
+    throw new Error(`Failed to send email. Details: ${errors}`);
   }
 
   throw new Error("No email sending configuration found. Please set EMAIL_USER/EMAIL_PASS, BREVO_API_KEY, or RESEND_API_KEY.");
+}
+
+export const sendVerificationEmail = async (email: string, token: string): Promise<void> => {
+  const baseUrl = process.env.BASE_URL || (process.env.NODE_ENV === "production" ? "" : "http://localhost:3000");
+  if (!baseUrl) {
+    throw new Error("Please define the BASE_URL environment variable inside your environment configuration.");
+  }
+  const verificationLink = `${baseUrl}/verify-email?token=${token}`;
+
+  const htmlContent = `
+    <h3>Email Verification</h3>
+    <p>Click the link below to verify your account:</p>
+    <a href="${verificationLink}">
+      Verify Email
+    </a>
+    <p>This link expires in 1 hour.</p>
+  `;
+
+  await dispatchEmail(email, "Verify your email", htmlContent);
+};
+
+export const sendPasswordResetEmail = async (email: string, token: string): Promise<void> => {
+  const baseUrl = process.env.BASE_URL || (process.env.NODE_ENV === "production" ? "" : "http://localhost:3000");
+  if (!baseUrl) {
+    throw new Error("Please define the BASE_URL environment variable inside your environment configuration.");
+  }
+  const resetLink = `${baseUrl}/reset-password?token=${token}&email=${encodeURIComponent(email)}`;
+
+  const htmlContent = `
+    <h3>Reset Your Password</h3>
+    <p>We received a request to reset your ClassVault account password.</p>
+    <p>Click the link below to set a new password:</p>
+    <a href="${resetLink}">
+      Reset Password
+    </a>
+    <p>This link expires in 1 hour. If you did not request this, please ignore this email.</p>
+  `;
+
+  await dispatchEmail(email, "Reset Your ClassVault Password", htmlContent);
 };

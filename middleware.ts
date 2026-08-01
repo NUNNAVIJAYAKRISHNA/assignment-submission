@@ -32,6 +32,9 @@ export function middleware(req: NextRequest) {
     pathname.startsWith("/api/register") ||
     pathname.startsWith("/api/faculty/register") ||
     pathname.startsWith("/api/logout") ||
+    pathname.startsWith("/api/forgot-password") ||
+    pathname.startsWith("/api/reset-password") ||
+    pathname.startsWith("/reset-password") ||
     pathname.includes(".") || // files like favicon.ico, images
     pathname === "/verify-email";
 
@@ -63,7 +66,8 @@ export function middleware(req: NextRequest) {
     pathname === "/login" ||
     pathname === "/registration" ||
     pathname === "/faculty/register" ||
-    pathname === "/admin/login";
+    pathname === "/admin/login" ||
+    pathname === "/reset-password";
 
   // Case 1: User is NOT logged in.
   if (!decoded) {
