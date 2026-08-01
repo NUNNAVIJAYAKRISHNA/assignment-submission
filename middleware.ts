@@ -28,6 +28,7 @@ export function middleware(req: NextRequest) {
   const isStaticOrPublicAsset =
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api/login") ||
+    pathname.startsWith("/api/admin/login") ||
     pathname.startsWith("/api/register") ||
     pathname.startsWith("/api/faculty/register") ||
     pathname.startsWith("/api/logout") ||
@@ -51,28 +52,52 @@ export function middleware(req: NextRequest) {
     pathname.startsWith("/facultyDashboard") ||
     (pathname.startsWith("/api/faculty") && pathname !== "/api/faculty/register");
 
+  // Protected admin-only paths
+  const isAdminPath =
+    pathname.startsWith("/adminDashboard") ||
+    (pathname.startsWith("/api/admin") && pathname !== "/api/admin/login");
+
   // Public pages that unauthenticated users can visit
   const isPublicPage =
     pathname === "/" ||
     pathname === "/login" ||
     pathname === "/registration" ||
-    pathname === "/faculty/register";
+    pathname === "/faculty/register" ||
+    pathname === "/admin/login";
 
-  // Case 1: User is NOT logged in. Redirect to /login if trying to access any private path.
+  // Case 1: User is NOT logged in.
   if (!decoded) {
     if (!isPublicPage) {
-      const loginUrl = new URL("/login", req.url);
-      return NextResponse.redirect(loginUrl);
+      if (isAdminPath) {
+        return NextResponse.redirect(new URL("/admin/login", req.url));
+      }
+      return NextResponse.redirect(new URL("/login", req.url));
     }
     return NextResponse.next();
   }
 
-  // Case 3: Student trying to access Faculty-only resources
+  // Case 2: Logged in as Admin
+  if (decoded.role === "admin") {
+    if (pathname === "/admin/login") {
+      return NextResponse.redirect(new URL("/adminDashboard", req.url));
+    }
+    if (isStudentPath || isFacultyPath) {
+      return NextResponse.redirect(new URL("/adminDashboard", req.url));
+    }
+    return NextResponse.next();
+  }
+
+  // Case 3: Non-admin user trying to access Admin resources
+  if (isAdminPath) {
+    return NextResponse.redirect(new URL("/admin/login", req.url));
+  }
+
+  // Case 4: Student trying to access Faculty-only resources
   if (isFacultyPath && decoded.role !== "faculty") {
     return NextResponse.redirect(new URL("/studentDashboard", req.url));
   }
 
-  // Case 4: Faculty trying to access Student-only resources
+  // Case 5: Faculty trying to access Student-only resources
   if (isStudentPath && decoded.role !== "student") {
     return NextResponse.redirect(new URL("/facultyDashboard", req.url));
   }

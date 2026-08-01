@@ -52,3 +52,7 @@ Thumbs.db
 
 *.tmp
 *.temp
+
+# Internal system documentation
+SYSTEM_FEATURES_GUIDE.md
+

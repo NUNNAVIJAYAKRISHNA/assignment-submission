@@ -12,13 +12,13 @@ if (!JWT_SECRET) {
 export interface SessionUser {
   _id: string;
   email: string;
-  role: "student" | "faculty";
+  role: "student" | "faculty" | "admin";
 }
 
 export function signToken(user: any): string {
   return jwt.sign(
     {
-      _id: user._id.toString(),
+      _id: user._id ? user._id.toString() : "admin",
       email: user.email,
       role: user.role,
     },
@@ -35,13 +35,22 @@ export function verifyToken(token: string): SessionUser | null {
   }
 }
 
-export async function getUserSession(): Promise<IUser | null> {
+export async function getUserSession(): Promise<any | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get("session")?.value;
   if (!token) return null;
 
   const payload = verifyToken(token);
   if (!payload) return null;
+
+  if (payload.role === "admin") {
+    return {
+      _id: "admin",
+      fullname: "System Administrator",
+      email: payload.email,
+      role: "admin",
+    };
+  }
 
   await connectDB();
   const user = await User.findById(payload._id);
