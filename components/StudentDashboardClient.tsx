@@ -101,11 +101,9 @@ export default function StudentDashboardClient({
     }
   };
 
-  // Fetch submissions on load or when tab changes to submissions
+  // Fetch submissions on load and when tab changes
   useEffect(() => {
-    if (activeTab === "submissions") {
-      fetchSubmissions();
-    }
+    fetchSubmissions();
   }, [activeTab]);
 
   // Sync profile form when user updates
@@ -481,6 +479,14 @@ export default function StudentDashboardClient({
 
                       const assignmentsEnabled = matchedTeaching ? !!matchedTeaching.assignmentsEnabled : false;
 
+                      // Check if a submission already exists for this faculty and subject
+                      const hasSubmitted = submissions.some((sub) => {
+                        const subFacultyId = typeof sub.facultyId === "object" ? sub.facultyId._id : sub.facultyId;
+                        const subSubject = (sub.subject || "").toLowerCase().trim();
+                        const teachingSubject = (matchedTeaching?.subject || "").toLowerCase().trim();
+                        return subFacultyId === faculty._id && subSubject === teachingSubject;
+                      });
+
                       const facultyInitials = faculty.fullname
                         ? faculty.fullname
                             .split(" ")
@@ -501,7 +507,11 @@ export default function StudentDashboardClient({
                               <span className="inline-flex items-center px-3 py-1 rounded-xl text-xs font-semibold bg-indigo-50 text-indigo-700">
                                 {matchedTeaching ? matchedTeaching.subject : "N/A"}
                               </span>
-                              {assignmentsEnabled ? (
+                              {hasSubmitted ? (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
+                                  Submitted
+                                </span>
+                              ) : assignmentsEnabled ? (
                                 <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
                                   Active
                                 </span>
@@ -526,7 +536,18 @@ export default function StudentDashboardClient({
                           </div>
 
                           <div className="mt-6 pt-4 border-t border-slate-50">
-                            {assignmentsEnabled ? (
+                            {hasSubmitted ? (
+                              <button
+                                disabled
+                                className="w-full inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-sm font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 cursor-not-allowed shadow-none opacity-90"
+                                title="Assignment already submitted. Go to 'My Submissions' tab to edit or update."
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                </svg>
+                                Submitted
+                              </button>
+                            ) : assignmentsEnabled ? (
                               <Link href={`/submit-video/${faculty._id}`} className="block w-full">
                                 <button className="w-full inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 shadow-md hover:shadow-lg hover:shadow-indigo-100 transform active:scale-98 transition-all duration-200">
                                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
