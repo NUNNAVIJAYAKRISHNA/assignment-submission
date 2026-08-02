@@ -36,17 +36,17 @@ export function createUser({
     email: email?.toLowerCase().trim(),
     password,
     role,
-    rollNumber: rollNumber?.trim() || null,
-    branch: branch?.trim() || null,
+    rollNumber: rollNumber ? rollNumber.trim().toUpperCase() : null,
+    branch: branch ? branch.trim().toUpperCase() : null,
     yearOfStudy: yearOfStudy ? Number(yearOfStudy) : null,
     semester: semester ? Number(semester) : null,
-    section: section ? section.toUpperCase() : null,
+    section: section ? section.trim().toUpperCase() : null,
     designation: designation?.trim() || null,
     teaching: (teaching || [])
       .filter((t) => t && (t.year || t.section?.trim() || t.subject?.trim()))
       .map((t) => ({
         year: Number(t.year),
-        section: t.section?.toUpperCase() || "",
+        section: t.section ? t.section.trim().toUpperCase() : "",
         subject: t.subject?.trim() || ""
       })) as ITeaching[]
   };

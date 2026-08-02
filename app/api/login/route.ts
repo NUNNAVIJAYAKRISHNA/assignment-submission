@@ -4,6 +4,8 @@ import connectDB from "../../../lib/db";
 import { loginUser } from "../../../utils/loginUser";
 import { signToken } from "../../../lib/auth";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(req: NextRequest) {
   try {
     await connectDB();

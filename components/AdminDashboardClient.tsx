@@ -74,6 +74,70 @@ export default function AdminDashboardClient({ initialAdmin }: AdminDashboardCli
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Administrative Actions State
+  const [actionLoadingUserId, setActionLoadingUserId] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const [deleteConfirmUser, setDeleteConfirmUser] = useState<{
+    userId: string;
+    fullname: string;
+    email: string;
+    role: string;
+  } | null>(null);
+
+  const showToast = (message: string, type: "success" | "error" = "success") => {
+    setToastMessage({ message, type });
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 4000);
+  };
+
+  const handleVerifyUser = async (userId: string, fullname: string) => {
+    setActionLoadingUserId(userId);
+    try {
+      const res = await fetch("/api/admin/users/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      });
+      const result = await res.json();
+      if (!res.ok || !result.success) {
+        throw new Error(result.message || "Failed to verify user at database level.");
+      }
+      showToast(result.message || `Successfully verified ${fullname} at database level.`, "success");
+      await fetchData();
+    } catch (err: any) {
+      console.error(err);
+      showToast(err.message || "Error verifying user", "error");
+    } finally {
+      setActionLoadingUserId(null);
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    if (!deleteConfirmUser) return;
+    const { userId, fullname } = deleteConfirmUser;
+    setActionLoadingUserId(userId);
+    try {
+      const res = await fetch("/api/admin/users/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      });
+      const result = await res.json();
+      if (!res.ok || !result.success) {
+        throw new Error(result.message || "Failed to delete unverified user from database.");
+      }
+      showToast(result.message || `Successfully deleted ${fullname} from database.`, "success");
+      setDeleteConfirmUser(null);
+      await fetchData();
+    } catch (err: any) {
+      console.error(err);
+      showToast(err.message || "Error deleting user", "error");
+    } finally {
+      setActionLoadingUserId(null);
+    }
+  };
+
   const fetchData = async () => {
     setLoading(true);
     setError(null);
@@ -290,6 +354,7 @@ export default function AdminDashboardClient({ initialAdmin }: AdminDashboardCli
                           <th className="py-3.5 px-4">Verification</th>
                           <th className="py-3.5 px-4">Designation & Branch</th>
                           <th className="py-3.5 px-4">Assigned Classes & Subjects</th>
+                          <th className="py-3.5 px-4">Actions</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-800/60">
@@ -350,6 +415,43 @@ export default function AdminDashboardClient({ initialAdmin }: AdminDashboardCli
                                     </span>
                                   ))}
                                 </div>
+                              )}
+                            </td>
+
+                            {/* Administrative Actions */}
+                            <td className="py-4 px-4 whitespace-nowrap">
+                              {!fac.isVerified ? (
+                                <div className="flex items-center space-x-2">
+                                  <button
+                                    onClick={() => handleVerifyUser(fac._id, fac.fullname)}
+                                    disabled={actionLoadingUserId === fac._id}
+                                    className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-xs font-bold text-emerald-300 bg-emerald-950/60 hover:bg-emerald-900 border border-emerald-700/50 transition-all disabled:opacity-50"
+                                    title="Verify faculty at database level"
+                                  >
+                                    {actionLoadingUserId === fac._id ? (
+                                      <span className="w-3 h-3 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin"></span>
+                                    ) : (
+                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                      </svg>
+                                    )}
+                                    <span>Verify</span>
+                                  </button>
+
+                                  <button
+                                    onClick={() => setDeleteConfirmUser({ userId: fac._id, fullname: fac.fullname, email: fac.email, role: "Faculty" })}
+                                    disabled={actionLoadingUserId === fac._id}
+                                    className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-xs font-bold text-rose-300 bg-rose-950/60 hover:bg-rose-900 border border-rose-800/50 transition-all disabled:opacity-50"
+                                    title="Delete unverified faculty from database"
+                                  >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                    <span>Delete</span>
+                                  </button>
+                                </div>
+                              ) : (
+                                <span className="text-[11px] text-slate-500 font-medium italic">No action required</span>
                               )}
                             </td>
                           </tr>
@@ -547,6 +649,7 @@ export default function AdminDashboardClient({ initialAdmin }: AdminDashboardCli
                                                       <th className="py-2.5 px-3">Email Address</th>
                                                       <th className="py-2.5 px-3">Verification</th>
                                                       <th className="py-2.5 px-3">Branch & Sem</th>
+                                                      <th className="py-2.5 px-3">Actions</th>
                                                     </tr>
                                                   </thead>
                                                   <tbody className="divide-y divide-slate-800/60">
@@ -596,6 +699,43 @@ export default function AdminDashboardClient({ initialAdmin }: AdminDashboardCli
                                                           <span className="text-slate-300 font-medium">{st.branch}</span>
                                                           <span className="text-[10px] text-slate-500 ml-2">Sem {st.semester}</span>
                                                         </td>
+
+                                                        {/* Administrative Actions */}
+                                                        <td className="py-3 px-3 whitespace-nowrap">
+                                                          {!st.isVerified ? (
+                                                            <div className="flex items-center space-x-2">
+                                                              <button
+                                                                onClick={() => handleVerifyUser(st._id, st.fullname)}
+                                                                disabled={actionLoadingUserId === st._id}
+                                                                className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-xs font-bold text-emerald-300 bg-emerald-950/60 hover:bg-emerald-900 border border-emerald-700/50 transition-all disabled:opacity-50"
+                                                                title="Verify student at database level"
+                                                              >
+                                                                {actionLoadingUserId === st._id ? (
+                                                                  <span className="w-3 h-3 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin"></span>
+                                                                ) : (
+                                                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                                                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                                  </svg>
+                                                                )}
+                                                                <span>Verify</span>
+                                                              </button>
+
+                                                              <button
+                                                                onClick={() => setDeleteConfirmUser({ userId: st._id, fullname: st.fullname, email: st.email, role: "Student" })}
+                                                                disabled={actionLoadingUserId === st._id}
+                                                                className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-xs font-bold text-rose-300 bg-rose-950/60 hover:bg-rose-900 border border-rose-800/50 transition-all disabled:opacity-50"
+                                                                title="Delete unverified student from database"
+                                                              >
+                                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                                                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                                </svg>
+                                                                <span>Delete</span>
+                                                              </button>
+                                                            </div>
+                                                          ) : (
+                                                            <span className="text-[11px] text-slate-500 font-medium italic">No action required</span>
+                                                          )}
+                                                        </td>
                                                       </tr>
                                                     ))}
                                                   </tbody>
@@ -620,6 +760,81 @@ export default function AdminDashboardClient({ initialAdmin }: AdminDashboardCli
           </div>
         )}
       </main>
+
+      {/* CONFIRM DELETE MODAL */}
+      {deleteConfirmUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-6 relative overflow-hidden">
+            <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-rose-500 via-red-600 to-amber-500"></div>
+
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center font-black text-xl">
+                ⚠️
+              </div>
+              <div>
+                <h3 className="text-lg font-extrabold text-white">Delete Unverified User</h3>
+                <p className="text-xs text-rose-400 font-semibold">Database Level Action</p>
+              </div>
+            </div>
+
+            <p className="text-sm text-slate-300">
+              Are you sure you want to permanently delete unverified {deleteConfirmUser.role.toLowerCase()} user{" "}
+              <strong className="text-white font-bold">{deleteConfirmUser.fullname}</strong> ({deleteConfirmUser.email}) from the database?
+            </p>
+
+            <div className="p-3.5 bg-slate-950 rounded-2xl border border-slate-800/80 text-xs text-slate-400">
+              This operation will permanently remove the user document and any associated data directly from MongoDB. This action cannot be undone.
+            </div>
+
+            <div className="flex items-center justify-end space-x-3 pt-2">
+              <button
+                onClick={() => setDeleteConfirmUser(null)}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-300 bg-slate-800 hover:bg-slate-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteUser}
+                disabled={actionLoadingUserId === deleteConfirmUser.userId}
+                className="inline-flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 shadow-md transition-all disabled:opacity-50"
+              >
+                {actionLoadingUserId === deleteConfirmUser.userId ? (
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                )}
+                <span>Delete User</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TOAST NOTIFICATION */}
+      {toastMessage && (
+        <div
+          className={`fixed bottom-6 right-6 z-50 max-w-md p-4 rounded-2xl border shadow-2xl flex items-center space-x-3 animate-fade-in ${
+            toastMessage.type === "success"
+              ? "bg-emerald-950/90 border-emerald-700 text-emerald-200"
+              : "bg-rose-950/90 border-rose-700 text-rose-200"
+          }`}
+        >
+          <div
+            className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 font-bold ${
+              toastMessage.type === "success" ? "bg-emerald-800/50 text-emerald-300" : "bg-rose-800/50 text-rose-300"
+            }`}
+          >
+            {toastMessage.type === "success" ? "✓" : "✕"}
+          </div>
+          <div className="flex-1 text-xs font-semibold">{toastMessage.message}</div>
+          <button onClick={() => setToastMessage(null)} className="text-slate-400 hover:text-white text-xs p-1">
+            ✕
+          </button>
+        </div>
+      )}
     </div>
   );
 }
+

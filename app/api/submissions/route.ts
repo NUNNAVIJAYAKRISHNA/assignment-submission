@@ -3,6 +3,8 @@ import connectDB from "../../../lib/db";
 import Submission from "../../../models/submissionModel";
 import { getUserSession } from "../../../lib/auth";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(req: NextRequest) {
   try {
     await connectDB();

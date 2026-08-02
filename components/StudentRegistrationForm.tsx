@@ -21,6 +21,25 @@ export default function StudentRegistrationForm() {
     e.preventDefault();
     setMessage(null);
     setError(null);
+
+    const formattedRollNumber = rollNumber.trim().toUpperCase();
+    const formattedBranch = branch.trim().toUpperCase();
+    const formattedSection = section.trim().toUpperCase();
+
+    if (
+      !fullname.trim() ||
+      !email.trim() ||
+      !password.trim() ||
+      !formattedRollNumber ||
+      !formattedBranch ||
+      !yearOfStudy ||
+      !semester ||
+      !formattedSection
+    ) {
+      setError("All fields are mandatory. Please fill in every field to register.");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -28,14 +47,14 @@ export default function StudentRegistrationForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          fullname,
-          email,
+          fullname: fullname.trim(),
+          email: email.trim(),
           password,
-          rollNumber,
-          branch,
+          rollNumber: formattedRollNumber,
+          branch: formattedBranch,
           yearOfStudy,
           semester,
-          section,
+          section: formattedSection,
         }),
       });
 
@@ -189,16 +208,16 @@ export default function StudentRegistrationForm() {
               type="text"
               required
               value={rollNumber}
-              onChange={(e) => setRollNumber(e.target.value)}
+              onChange={(e) => setRollNumber(e.target.value.toUpperCase())}
               placeholder="23ACSE113"
-              className="w-full h-11 pl-11 pr-4 rounded-xl border border-slate-200 bg-slate-50/50 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 transition-all duration-200 text-sm"
+              className="w-full h-11 pl-11 pr-4 rounded-xl border border-slate-200 bg-slate-50/50 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 transition-all duration-200 text-sm uppercase"
             />
           </div>
         </div>
 
         {/* Branch */}
         <div className="md:col-span-3 flex flex-col">
-          <label htmlFor="branch" className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Branch</label>
+          <label htmlFor="branch" className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Branch / Department</label>
           <div className="relative">
             <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 pointer-events-none">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -210,9 +229,9 @@ export default function StudentRegistrationForm() {
               type="text"
               required
               value={branch}
-              onChange={(e) => setBranch(e.target.value)}
+              onChange={(e) => setBranch(e.target.value.toUpperCase())}
               placeholder="CSE"
-              className="w-full h-11 pl-11 pr-4 rounded-xl border border-slate-200 bg-slate-50/50 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 transition-all duration-200 text-sm"
+              className="w-full h-11 pl-11 pr-4 rounded-xl border border-slate-200 bg-slate-50/50 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 transition-all duration-200 text-sm uppercase"
             />
           </div>
         </div>
@@ -277,9 +296,9 @@ export default function StudentRegistrationForm() {
               type="text"
               required
               value={section}
-              onChange={(e) => setSection(e.target.value)}
+              onChange={(e) => setSection(e.target.value.toUpperCase())}
               placeholder="A/B/C/D"
-              className="w-full h-11 pl-11 pr-4 rounded-xl border border-slate-200 bg-slate-50/50 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 transition-all duration-200 text-sm"
+              className="w-full h-11 pl-11 pr-4 rounded-xl border border-slate-200 bg-slate-50/50 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 transition-all duration-200 text-sm uppercase"
             />
           </div>
         </div>

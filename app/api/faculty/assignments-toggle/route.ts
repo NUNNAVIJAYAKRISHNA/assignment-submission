@@ -3,6 +3,8 @@ import connectDB from "../../../../lib/db";
 import User from "../../../../models/userModel";
 import { getUserSession } from "../../../../lib/auth";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(req: NextRequest) {
   try {
     await connectDB();
