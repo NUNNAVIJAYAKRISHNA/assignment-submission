@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "../../../../lib/db";
-import User from "../../../../models/userModel";
 import Submission from "../../../../models/submissionModel";
 import { getUserSession } from "../../../../lib/auth";
-import { createZip } from "../../../../utils/zip";
+import { ZipStreamBuilder } from "../../../../utils/zip";
 
 interface FileEntry {
   name: string;
@@ -146,6 +145,34 @@ async function fetchSubmissionFile(
   }
 }
 
+/** Download files with bounded concurrency to limit peak memory usage. */
+async function downloadWithConcurrency(
+  submissions: { studentName: string; studentRollNumber: string; videoUrl: string }[],
+  concurrency: number
+): Promise<FileEntry[]> {
+  const results: FileEntry[] = new Array(submissions.length);
+  let nextIndex = 0;
+
+  async function worker() {
+    while (nextIndex < submissions.length) {
+      const idx = nextIndex++;
+      const sub = submissions[idx];
+      results[idx] = await fetchSubmissionFile(
+        sub.studentName,
+        sub.studentRollNumber || "N/A",
+        sub.videoUrl
+      );
+    }
+  }
+
+  const workers = Array.from(
+    { length: Math.min(concurrency, submissions.length) },
+    () => worker()
+  );
+  await Promise.all(workers);
+  return results;
+}
+
 export async function GET(req: NextRequest) {
   try {
     await connectDB();
@@ -172,7 +199,7 @@ export async function GET(req: NextRequest) {
 
     // Verify this class is indeed taught by this faculty member
     const matchedTeaching = user.teaching?.find(
-      (t) => t.year === year && t.section === section && (!subject || t.subject.toLowerCase() === subject.toLowerCase())
+      (t: any) => t.year === year && t.section === section && (!subject || t.subject.toLowerCase() === subject.toLowerCase())
     );
 
     if (!matchedTeaching) {
@@ -223,11 +250,16 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // Prepare files list for ZIP by fetching submission links concurrently
-    const filePromises = submissions.map((sub) =>
-      fetchSubmissionFile(sub.studentName, sub.studentRollNumber || "N/A", sub.videoUrl)
+    // Download files with bounded concurrency (3 at a time)
+    const DOWNLOAD_CONCURRENCY = 3;
+    const files = await downloadWithConcurrency(
+      submissions.map((sub) => ({
+        studentName: sub.studentName,
+        studentRollNumber: sub.studentRollNumber,
+        videoUrl: sub.videoUrl
+      })),
+      DOWNLOAD_CONCURRENCY
     );
-    const files: FileEntry[] = await Promise.all(filePromises);
 
     // Create summary.txt
     let summaryText = `Submissions Summary\n`;
@@ -249,20 +281,34 @@ export async function GET(req: NextRequest) {
       summaryText += `-------------------\n`;
     });
 
-    files.push({ name: "summary.txt", content: summaryText });
-
-    // Generate ZIP buffer
-    const zipBuffer = createZip(files);
-
+    // Stream the ZIP response using ZipStreamBuilder
     const safeSubject = matchedTeaching.subject.replace(/[^a-zA-Z0-9_-]/g, "_");
     const zipName = `submissions_Y${year}_Sec${section}_${safeSubject}.zip`;
 
-    return new Response(Buffer.from(zipBuffer), {
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        const zipBuilder = new ZipStreamBuilder(controller);
+
+        // Add each downloaded file to the ZIP and release its buffer
+        for (let i = 0; i < files.length; i++) {
+          zipBuilder.addFile(files[i].name, files[i].content);
+          // Release the file buffer reference so it can be GC'd
+          (files[i] as any).content = null;
+        }
+
+        // Add the summary file
+        zipBuilder.addFile("summary.txt", summaryText);
+
+        // Write central directory + EOCD and close the stream
+        zipBuilder.finalize();
+      }
+    });
+
+    return new Response(stream, {
       status: 200,
       headers: {
         "Content-Type": "application/zip",
         "Content-Disposition": `attachment; filename="${zipName}"`,
-        "Content-Length": zipBuffer.length.toString()
       }
     });
 
@@ -271,3 +317,4 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ success: false, message: error.message || "Internal server error" }, { status: 500 });
   }
 }
+

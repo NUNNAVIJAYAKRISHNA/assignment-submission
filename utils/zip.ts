@@ -103,3 +103,98 @@ export function createZip(files: { name: string; content: string | Uint8Array }[
 
   return result;
 }
+
+/**
+ * Streaming ZIP builder that writes data incrementally to a ReadableStream controller.
+ * Only the small central directory entries are accumulated in memory.
+ */
+export class ZipStreamBuilder {
+  private cdParts: Uint8Array[] = [];
+  private offset = 0;
+  private controller: ReadableStreamDefaultController<Uint8Array>;
+
+  constructor(controller: ReadableStreamDefaultController<Uint8Array>) {
+    this.controller = controller;
+  }
+
+  addFile(name: string, content: string | Uint8Array): void {
+    const nameBytes = new TextEncoder().encode(name);
+    const contentBytes =
+      typeof content === "string"
+        ? new TextEncoder().encode(content)
+        : content;
+    const crc = calculateCrc32(contentBytes);
+    const size = contentBytes.length;
+
+    // Local file header (30 + name length bytes — tiny)
+    const lfHeader = new Uint8Array(30 + nameBytes.length);
+    const lfView = new DataView(lfHeader.buffer);
+    lfView.setUint32(0, 0x04034b50, true);
+    lfView.setUint16(4, 10, true);
+    lfView.setUint16(6, 0, true);
+    lfView.setUint16(8, 0, true);
+    lfView.setUint16(10, 0, true);
+    lfView.setUint16(12, 0, true);
+    lfView.setUint32(14, crc, true);
+    lfView.setUint32(18, size, true);
+    lfView.setUint32(22, size, true);
+    lfView.setUint16(26, nameBytes.length, true);
+    lfView.setUint16(28, 0, true);
+    lfHeader.set(nameBytes, 30);
+
+    // Enqueue header + data into the stream immediately
+    this.controller.enqueue(lfHeader);
+    this.controller.enqueue(contentBytes);
+
+    // Central directory entry (~46 + name length bytes — accumulated)
+    const cdHeader = new Uint8Array(46 + nameBytes.length);
+    const cdView = new DataView(cdHeader.buffer);
+    cdView.setUint32(0, 0x02014b50, true);
+    cdView.setUint16(4, 10, true);
+    cdView.setUint16(6, 10, true);
+    cdView.setUint16(8, 0, true);
+    cdView.setUint16(10, 0, true);
+    cdView.setUint16(12, 0, true);
+    cdView.setUint16(14, 0, true);
+    cdView.setUint32(16, crc, true);
+    cdView.setUint32(20, size, true);
+    cdView.setUint32(24, size, true);
+    cdView.setUint16(28, nameBytes.length, true);
+    cdView.setUint16(30, 0, true);
+    cdView.setUint16(32, 0, true);
+    cdView.setUint16(34, 0, true);
+    cdView.setUint16(36, 0, true);
+    cdView.setUint32(38, 0, true);
+    cdView.setUint32(42, this.offset, true);
+    cdHeader.set(nameBytes, 46);
+
+    this.cdParts.push(cdHeader);
+    this.offset += lfHeader.length + contentBytes.length;
+  }
+
+  finalize(): void {
+    const cdOffset = this.offset;
+    let cdSize = 0;
+    for (const part of this.cdParts) {
+      this.controller.enqueue(part);
+      cdSize += part.length;
+    }
+
+    const eocd = new Uint8Array(22);
+    const eocdView = new DataView(eocd.buffer);
+    eocdView.setUint32(0, 0x06054b50, true);
+    eocdView.setUint16(4, 0, true);
+    eocdView.setUint16(6, 0, true);
+    eocdView.setUint16(8, this.cdParts.length, true);
+    eocdView.setUint16(10, this.cdParts.length, true);
+    eocdView.setUint32(12, cdSize, true);
+    eocdView.setUint32(16, cdOffset, true);
+    eocdView.setUint16(20, 0, true);
+
+    this.controller.enqueue(eocd);
+    this.controller.close();
+
+    // Release references
+    this.cdParts = [];
+  }
+}
