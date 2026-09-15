@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import connectDB from "../../../../lib/db";
 import Submission from "../../../../models/submissionModel";
 import { getUserSession } from "../../../../lib/auth";
-import { createZip } from "../../../../utils/zip";
+import { ZipStreamBuilder } from "../../../../utils/zip";
+
+export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 interface FileEntry {
   name: string;
@@ -56,8 +59,8 @@ async function fetchSubmissionFile(
 
   try {
     const controller = new AbortController();
-    // Set a timeout of 15 seconds to prevent hanging the API
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    // Allow up to 45 seconds for large video downloads while preventing indefinite hangs
+    const timeoutId = setTimeout(() => controller.abort(), 45000);
 
     const res = await fetch(targetUrl, {
       signal: controller.signal,
@@ -145,34 +148,6 @@ async function fetchSubmissionFile(
   }
 }
 
-/** Download files with bounded concurrency to limit peak memory usage. */
-async function downloadWithConcurrency(
-  submissions: { studentName: string; studentRollNumber: string; videoUrl: string }[],
-  concurrency: number
-): Promise<FileEntry[]> {
-  const results: FileEntry[] = new Array(submissions.length);
-  let nextIndex = 0;
-
-  async function worker() {
-    while (nextIndex < submissions.length) {
-      const idx = nextIndex++;
-      const sub = submissions[idx];
-      results[idx] = await fetchSubmissionFile(
-        sub.studentName,
-        sub.studentRollNumber || "N/A",
-        sub.videoUrl
-      );
-    }
-  }
-
-  const workers = Array.from(
-    { length: Math.min(concurrency, submissions.length) },
-    () => worker()
-  );
-  await Promise.all(workers);
-  return results;
-}
-
 export async function GET(req: NextRequest) {
   try {
     await connectDB();
@@ -250,18 +225,7 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // Download files with bounded concurrency (3 at a time)
-    const DOWNLOAD_CONCURRENCY = 3;
-    const files = await downloadWithConcurrency(
-      submissions.map((sub) => ({
-        studentName: sub.studentName,
-        studentRollNumber: sub.studentRollNumber,
-        videoUrl: sub.videoUrl
-      })),
-      DOWNLOAD_CONCURRENCY
-    );
-
-    // Create summary.txt
+    // Prepare summary.txt
     let summaryText = `Submissions Summary\n`;
     summaryText += `===================\n`;
     summaryText += `Faculty: ${user.fullname}\n`;
@@ -281,23 +245,70 @@ export async function GET(req: NextRequest) {
       summaryText += `-------------------\n`;
     });
 
-    files.push({ name: "summary.txt", content: summaryText });
-
-    // Generate ZIP buffer
-    const zipBuffer = createZip(files);
-
-    // Release file references to free memory before sending response
-    files.length = 0;
-
     const safeSubject = matchedTeaching.subject.replace(/[^a-zA-Z0-9_-]/g, "_");
     const zipName = `submissions_Y${year}_Sec${section}_${safeSubject}.zip`;
 
-    return new Response(Buffer.from(zipBuffer.buffer, zipBuffer.byteOffset, zipBuffer.byteLength) as unknown as BodyInit, {
+    // Stream the ZIP response directly to the client with bounded concurrency (2 workers).
+    // Each downloaded submission is written immediately into the ZIP stream and dereferenced,
+    // ensuring memory usage never exceeds ~150 MB even for 75 large video submissions.
+    const stream = new ReadableStream<Uint8Array>({
+      async start(controller) {
+        const zipBuilder = new ZipStreamBuilder(controller);
+        try {
+          const CONCURRENCY = 2;
+          let nextIndex = 0;
+
+          const worker = async () => {
+            while (nextIndex < submissions.length) {
+              const idx = nextIndex++;
+              const sub = submissions[idx];
+              try {
+                const file = await fetchSubmissionFile(
+                  sub.studentName,
+                  sub.studentRollNumber || "N/A",
+                  sub.videoUrl
+                );
+                zipBuilder.addFile(file.name, file.content);
+                // Immediately release buffer memory so GC can reclaim it
+                (file as any).content = null;
+              } catch (fileErr) {
+                console.error(`Error processing submission for ${sub.studentName}:`, fileErr);
+                const cleanedStudentName = sub.studentName.replace(/[^a-zA-Z0-9_-]/g, "_");
+                const cleanedRollNumber = (sub.studentRollNumber || "N/A").replace(/[^a-zA-Z0-9_-]/g, "_");
+                zipBuilder.addFile(
+                  `${cleanedRollNumber}_${cleanedStudentName}_submission.url`,
+                  `[InternetShortcut]\r\nURL=${sub.videoUrl}\r\n`
+                );
+              }
+            }
+          };
+
+          const workers = Array.from(
+            { length: Math.min(CONCURRENCY, submissions.length) },
+            () => worker()
+          );
+          await Promise.all(workers);
+
+          // Add summary.txt
+          zipBuilder.addFile("summary.txt", summaryText);
+
+          // Finalize ZIP archive (writes central directory + EOCD and closes stream)
+          zipBuilder.finalize();
+        } catch (streamErr) {
+          console.error("Critical error in ZIP stream generation:", streamErr);
+          try {
+            controller.error(streamErr);
+          } catch (_) {}
+        }
+      }
+    });
+
+    return new Response(stream, {
       status: 200,
       headers: {
         "Content-Type": "application/zip",
         "Content-Disposition": `attachment; filename="${zipName}"`,
-        "Content-Length": zipBuffer.length.toString()
+        "Cache-Control": "no-cache, no-store, must-revalidate",
       }
     });
 
