@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import connectDB from "../../../../lib/db";
 import Submission from "../../../../models/submissionModel";
 import { getUserSession } from "../../../../lib/auth";
-import { ZipStreamBuilder } from "../../../../utils/zip";
+import { createZip } from "../../../../utils/zip";
 
 interface FileEntry {
   name: string;
@@ -281,34 +281,23 @@ export async function GET(req: NextRequest) {
       summaryText += `-------------------\n`;
     });
 
-    // Stream the ZIP response using ZipStreamBuilder
+    files.push({ name: "summary.txt", content: summaryText });
+
+    // Generate ZIP buffer
+    const zipBuffer = createZip(files);
+
+    // Release file references to free memory before sending response
+    files.length = 0;
+
     const safeSubject = matchedTeaching.subject.replace(/[^a-zA-Z0-9_-]/g, "_");
     const zipName = `submissions_Y${year}_Sec${section}_${safeSubject}.zip`;
 
-    const stream = new ReadableStream<Uint8Array>({
-      start(controller) {
-        const zipBuilder = new ZipStreamBuilder(controller);
-
-        // Add each downloaded file to the ZIP and release its buffer
-        for (let i = 0; i < files.length; i++) {
-          zipBuilder.addFile(files[i].name, files[i].content);
-          // Release the file buffer reference so it can be GC'd
-          (files[i] as any).content = null;
-        }
-
-        // Add the summary file
-        zipBuilder.addFile("summary.txt", summaryText);
-
-        // Write central directory + EOCD and close the stream
-        zipBuilder.finalize();
-      }
-    });
-
-    return new Response(stream, {
+    return new Response(Buffer.from(zipBuffer.buffer, zipBuffer.byteOffset, zipBuffer.byteLength) as unknown as BodyInit, {
       status: 200,
       headers: {
         "Content-Type": "application/zip",
         "Content-Disposition": `attachment; filename="${zipName}"`,
+        "Content-Length": zipBuffer.length.toString()
       }
     });
 
