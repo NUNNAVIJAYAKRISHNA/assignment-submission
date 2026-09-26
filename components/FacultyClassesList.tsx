@@ -33,6 +33,135 @@ export default function FacultyClassesList({ classes }: { classes: ClassItem[] }
     return initialMap;
   });
 
+  const [downloadModal, setDownloadModal] = useState<{
+    isOpen: boolean;
+    cls: ClassItem | null;
+    total: number;
+    batchSize: number;
+    totalParts: number;
+    currentPart: number;
+    status: "idle" | "fetching-info" | "downloading" | "completed" | "error" | "cancelled";
+    errorMessage?: string;
+  }>({
+    isOpen: false,
+    cls: null,
+    total: 0,
+    batchSize: 8,
+    totalParts: 1,
+    currentPart: 0,
+    status: "idle",
+  });
+
+  const abortDownloadRef = { current: false };
+
+  const startAutoDownload = async (cls: ClassItem) => {
+    abortDownloadRef.current = false;
+    setDownloadModal({
+      isOpen: true,
+      cls,
+      total: 0,
+      batchSize: 8,
+      totalParts: 1,
+      currentPart: 0,
+      status: "fetching-info",
+    });
+
+    try {
+      // 1. Fetch total submission count for this class
+      const metaRes = await fetch(
+        `/api/faculty/download-submissions?year=${cls.year}&section=${cls.section}&subject=${encodeURIComponent(
+          cls.subject
+        )}&action=meta`
+      );
+      const metaData = await metaRes.json();
+
+      if (!metaRes.ok || !metaData.success || !metaData.total) {
+        throw new Error(metaData.message || "No submissions found to download.");
+      }
+
+      const totalCount = metaData.total;
+      // Use 8 submissions per batch to stay comfortably within Vercel's 60s limit
+      const BATCH_SIZE = 8;
+      const calculatedParts = Math.ceil(totalCount / BATCH_SIZE);
+
+      setDownloadModal((prev) => ({
+        ...prev,
+        total: totalCount,
+        batchSize: BATCH_SIZE,
+        totalParts: calculatedParts,
+        currentPart: 1,
+        status: "downloading",
+      }));
+
+      // 2. Loop through all batches sequentially
+      for (let part = 1; part <= calculatedParts; part++) {
+        if (abortDownloadRef.current) {
+          setDownloadModal((prev) => ({ ...prev, status: "cancelled" }));
+          return;
+        }
+
+        setDownloadModal((prev) => ({
+          ...prev,
+          currentPart: part,
+          status: "downloading",
+        }));
+
+        const offset = (part - 1) * BATCH_SIZE;
+        const downloadUrl = `/api/faculty/download-submissions?year=${cls.year}&section=${cls.section}&subject=${encodeURIComponent(
+          cls.subject
+        )}&offset=${offset}&limit=${BATCH_SIZE}&part=${part}_of_${calculatedParts}`;
+
+        // Fetch the file as a blob so we know exactly when it finishes before initiating the next part
+        const fileRes = await fetch(downloadUrl);
+        if (!fileRes.ok) {
+          throw new Error(`Part ${part} failed with status ${fileRes.status}`);
+        }
+
+        const blob = await fileRes.blob();
+        if (abortDownloadRef.current) {
+          setDownloadModal((prev) => ({ ...prev, status: "cancelled" }));
+          return;
+        }
+
+        // Trigger browser download via object URL
+        const blobUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = blobUrl;
+        
+        // Extract filename from Content-Disposition header if available
+        const cdHeader = fileRes.headers.get("Content-Disposition");
+        let filename = `submissions_Y${cls.year}_Sec${cls.section}_${cls.subject.replace(/[^a-zA-Z0-9_-]/g, "_")}_Part${part}_of_${calculatedParts}.zip`;
+        if (cdHeader) {
+          const match = cdHeader.match(/filename\*?=(?:UTF-8'')?["']?([^"';]+)["']?/i);
+          if (match && match[1]) {
+            filename = decodeURIComponent(match[1]);
+          }
+        }
+
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(blobUrl);
+
+        // Small pause between parts
+        await new Promise((r) => setTimeout(r, 1200));
+      }
+
+      setDownloadModal((prev) => ({
+        ...prev,
+        status: "completed",
+      }));
+    } catch (err: any) {
+      console.error("[Auto-Download Error]", err);
+      setDownloadModal((prev) => ({
+        ...prev,
+        status: "error",
+        errorMessage: err.message || "Failed to download submissions.",
+      }));
+    }
+  };
+
   const toggleClass = (idx: number) => {
     setOpenIndex(openIndex === idx ? null : idx);
   };
@@ -183,10 +312,10 @@ export default function FacultyClassesList({ classes }: { classes: ClassItem[] }
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      window.location.href = `/api/faculty/download-submissions?year=${cls.year}&section=${cls.section}&subject=${encodeURIComponent(cls.subject)}`;
+                      startAutoDownload(cls);
                     }}
                     className="inline-flex items-center px-3 py-1.5 rounded-2xl text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 shadow-sm hover:shadow active:scale-[0.97] hover:scale-[1.02] transform transition-all duration-200 select-none"
-                    title="Download all student submissions as a ZIP archive"
+                    title="Download all student submissions as ZIP archives (automated batching)"
                   >
                     <svg
                       className="h-3.5 w-3.5 mr-1"
@@ -353,6 +482,155 @@ export default function FacultyClassesList({ classes }: { classes: ClassItem[] }
           </div>
         );
       })}
+
+      {/* --- AUTOMATED BATCH DOWNLOAD PROGRESS MODAL --- */}
+      {downloadModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 p-6 sm:p-8 max-w-md w-full relative overflow-hidden transition-all duration-300">
+            {/* Top gradient accent */}
+            <div className="absolute inset-x-0 top-0 h-2 bg-gradient-to-r from-indigo-500 via-indigo-600 to-violet-600"></div>
+
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+                  {downloadModal.status === "completed" ? (
+                    <svg className="w-6 h-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  ) : downloadModal.status === "error" ? (
+                    <svg className="w-6 h-6 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5 animate-spin" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  )}
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900">
+                    {downloadModal.status === "completed"
+                      ? "Download Complete"
+                      : downloadModal.status === "error"
+                      ? "Download Failed"
+                      : "Downloading Submissions"}
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    {downloadModal.cls
+                      ? `Year ${downloadModal.cls.year} - Sec ${downloadModal.cls.section} (${downloadModal.cls.subject})`
+                      : ""}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            {downloadModal.status === "fetching-info" && (
+              <div className="py-6 text-center text-sm text-slate-600 flex flex-col items-center">
+                <div className="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mb-3"></div>
+                Analyzing submissions and computing batch sizes...
+              </div>
+            )}
+
+            {downloadModal.status === "downloading" && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between text-xs font-semibold text-slate-600">
+                  <span>
+                    Batch {downloadModal.currentPart} of {downloadModal.totalParts}
+                  </span>
+                  <span>
+                    {Math.min(downloadModal.currentPart * downloadModal.batchSize, downloadModal.total)} / {downloadModal.total} submissions
+                  </span>
+                </div>
+
+                {/* Progress bar */}
+                <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                  <div
+                    className="bg-indigo-600 h-2.5 rounded-full transition-all duration-500 ease-out"
+                    style={{
+                      width: `${Math.round(
+                        ((downloadModal.currentPart - 0.3) / downloadModal.totalParts) * 100
+                      )}%`,
+                    }}
+                  ></div>
+                </div>
+
+                <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-100 text-xs text-slate-600 space-y-1">
+                  <p className="font-semibold text-slate-800">
+                    Downloading Part {downloadModal.currentPart} of {downloadModal.totalParts}...
+                  </p>
+                  <p className="text-slate-500">
+                    Submissions are automatically split into manageable batches so Vercel does not cut off the download. Each part will save directly to your browser.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {downloadModal.status === "completed" && (
+              <div className="py-4 space-y-3">
+                <div className="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-100 text-emerald-800 text-xs">
+                  <p className="font-bold mb-1">All parts finished downloading!</p>
+                  <p>
+                    Downloaded {downloadModal.total} submissions across {downloadModal.totalParts} ZIP {downloadModal.totalParts === 1 ? "file" : "files"}. Please check your browser downloads folder.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {downloadModal.status === "error" && (
+              <div className="py-4 space-y-3">
+                <div className="p-3.5 bg-rose-50 rounded-2xl border border-rose-100 text-rose-700 text-xs font-medium">
+                  {downloadModal.errorMessage}
+                </div>
+              </div>
+            )}
+
+            {/* Modal Actions */}
+            <div className="mt-6 flex justify-end gap-2">
+              {downloadModal.status === "downloading" ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    abortDownloadRef.current = true;
+                    setDownloadModal((prev) => ({ ...prev, isOpen: false, status: "idle" }));
+                  }}
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors"
+                >
+                  Cancel Download
+                </button>
+              ) : downloadModal.status === "error" ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setDownloadModal((prev) => ({ ...prev, isOpen: false }))}
+                    className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors"
+                  >
+                    Close
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (downloadModal.cls) startAutoDownload(downloadModal.cls);
+                    }}
+                    className="px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-colors shadow-sm"
+                  >
+                    Retry
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setDownloadModal((prev) => ({ ...prev, isOpen: false, status: "idle" }))}
+                  className="px-5 py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-colors shadow-sm"
+                >
+                  Done
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
