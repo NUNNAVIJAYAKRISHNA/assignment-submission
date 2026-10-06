@@ -25,6 +25,7 @@ export default async function FacultyDashboardPage() {
     email: user.email,
     role: user.role,
     designation: user.designation,
+    branch: user.branch,
   };
 
   // Serialize classes list and nested students/submissions safely
@@ -32,6 +33,7 @@ export default async function FacultyDashboardPage() {
     year: cls.year,
     section: cls.section,
     subject: cls.subject,
+    branch: cls.branch,
     assignmentsEnabled: cls.assignmentsEnabled,
     students: cls.students.map((student) => ({
       _id: student._id.toString(),

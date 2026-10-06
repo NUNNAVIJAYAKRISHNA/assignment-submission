@@ -14,6 +14,7 @@ interface FacultyItem {
     year: number;
     section: string;
     subject: string;
+    branch?: string | null;
     assignmentsEnabled?: boolean;
   }>;
   createdAt: string | null;
@@ -411,7 +412,7 @@ export default function AdminDashboardClient({ initialAdmin }: AdminDashboardCli
                                       key={idx}
                                       className="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-slate-900 border border-slate-800 text-slate-200"
                                     >
-                                      Year {t.year} — Sec {t.section} <span className="text-indigo-400 font-semibold">({t.subject})</span>
+                                      Year {t.year} — Sec {t.section}{t.branch ? ` (${t.branch})` : ""} <span className="text-indigo-400 font-semibold">({t.subject})</span>
                                     </span>
                                   ))}
                                 </div>

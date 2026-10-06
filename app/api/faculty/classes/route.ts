@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { year, section, subject } = await req.json();
+    const { year, section, subject, branch } = await req.json();
 
     if (!year || !section || !subject) {
       return NextResponse.json(
@@ -34,6 +34,7 @@ export async function POST(req: NextRequest) {
 
     const cleanSection = section.trim().toUpperCase();
     const cleanSubject = subject.trim();
+    const cleanBranch = branch ? branch.trim().toUpperCase() : undefined;
 
     if (!cleanSection || !cleanSubject) {
       return NextResponse.json(
@@ -52,7 +53,8 @@ export async function POST(req: NextRequest) {
       (t) =>
         t.year === yearNum &&
         t.section.toUpperCase() === cleanSection &&
-        t.subject.toLowerCase() === cleanSubject.toLowerCase()
+        t.subject.toLowerCase() === cleanSubject.toLowerCase() &&
+        (!cleanBranch || !t.branch || t.branch.toUpperCase() === cleanBranch)
     );
 
     if (exists) {
@@ -67,6 +69,7 @@ export async function POST(req: NextRequest) {
       year: yearNum,
       section: cleanSection,
       subject: cleanSubject,
+      branch: cleanBranch || null,
       assignmentsEnabled: false,
     });
 
@@ -94,7 +97,7 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    const { year, section, subject } = await req.json();
+    const { year, section, subject, branch } = await req.json();
 
     if (!year || !section || !subject) {
       return NextResponse.json(
@@ -106,6 +109,7 @@ export async function DELETE(req: NextRequest) {
     const yearNum = Number(year);
     const cleanSection = section.trim().toUpperCase();
     const cleanSubject = subject.trim();
+    const cleanBranch = branch ? branch.trim().toUpperCase() : undefined;
 
     if (!user.teaching || user.teaching.length === 0) {
       return NextResponse.json(
@@ -121,7 +125,8 @@ export async function DELETE(req: NextRequest) {
         !(
           t.year === yearNum &&
           t.section.toUpperCase() === cleanSection &&
-          t.subject.toLowerCase() === cleanSubject.toLowerCase()
+          t.subject.toLowerCase() === cleanSubject.toLowerCase() &&
+          (!cleanBranch || !t.branch || t.branch.toUpperCase() === cleanBranch)
         )
     );
 

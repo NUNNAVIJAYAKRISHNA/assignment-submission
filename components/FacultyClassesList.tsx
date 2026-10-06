@@ -18,6 +18,7 @@ interface ClassItem {
   year: number;
   section: string;
   subject: string;
+  branch?: string;
   assignmentsEnabled: boolean;
   students: Student[];
 }
@@ -216,9 +217,11 @@ export default function FacultyClassesList({ classes }: { classes: ClassItem[] }
                 </div>
                 <div>
                   <h3 className="font-bold text-slate-900 text-sm sm:text-base">
-                    Year {cls.year} — Section {cls.section} — <span className="text-indigo-600">{cls.subject}</span>
+                    Year {cls.year} — Section {cls.section}{cls.branch ? ` — Branch ${cls.branch}` : ""} — <span className="text-indigo-600">{cls.subject}</span>
                   </h3>
-                  <p className="text-xs text-slate-400 font-medium">Student Directory</p>
+                  <p className="text-xs text-slate-400 font-medium">
+                    Student Directory{cls.branch ? ` • ${cls.branch}` : ""}
+                  </p>
                 </div>
               </div>
 
@@ -364,7 +367,7 @@ export default function FacultyClassesList({ classes }: { classes: ClassItem[] }
                     e.stopPropagation();
                     if (
                       confirm(
-                        `Are you sure you want to remove the class: Year ${cls.year} - Section ${cls.section} - ${cls.subject}?\n\nThis will remove it from your dashboard but submissions remain stored.`
+                        `Are you sure you want to remove the class: Year ${cls.year} - Section ${cls.section}${cls.branch ? ` - Branch ${cls.branch}` : ""} - ${cls.subject}?\n\nThis will remove it from your dashboard but submissions remain stored.`
                       )
                     ) {
                       try {
@@ -375,6 +378,7 @@ export default function FacultyClassesList({ classes }: { classes: ClassItem[] }
                             year: cls.year,
                             section: cls.section,
                             subject: cls.subject,
+                            branch: cls.branch,
                           }),
                         });
                         const data = await res.json();
@@ -437,6 +441,11 @@ export default function FacultyClassesList({ classes }: { classes: ClassItem[] }
                             <span className="text-xs text-slate-400 block sm:inline sm:ml-3">
                               Reg No: <strong className="text-slate-600 font-medium">{student.rollNumber}</strong>
                             </span>
+                            {student.branch && (
+                              <span className="text-xs text-slate-400 block sm:inline sm:ml-3">
+                                Branch: <strong className="text-slate-600 font-medium">{student.branch}</strong>
+                              </span>
+                            )}
                           </div>
                         </div>
                         <div className="flex items-center space-x-3">
@@ -518,7 +527,7 @@ export default function FacultyClassesList({ classes }: { classes: ClassItem[] }
                   </h3>
                   <p className="text-xs text-slate-500">
                     {downloadModal.cls
-                      ? `Year ${downloadModal.cls.year} - Sec ${downloadModal.cls.section} (${downloadModal.cls.subject})`
+                      ? `Year ${downloadModal.cls.year} - Sec ${downloadModal.cls.section}${downloadModal.cls.branch ? ` - Branch ${downloadModal.cls.branch}` : ""} (${downloadModal.cls.subject})`
                       : ""}
                   </p>
                 </div>

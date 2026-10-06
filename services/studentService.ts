@@ -5,11 +5,12 @@ export interface GroupedStudents {
   year: number;
   section: string;
   subject: string;
+  branch?: string;
   assignmentsEnabled: boolean;
   students: any[];
 }
 
-export const getStudentsForFaculty = async (faculty: { _id: any; teaching?: ITeaching[] }): Promise<GroupedStudents[]> => {
+export const getStudentsForFaculty = async (faculty: { _id: any; branch?: string | null; teaching?: ITeaching[] }): Promise<GroupedStudents[]> => {
   if (!faculty.teaching || faculty.teaching.length === 0) {
     return [];
   }
@@ -24,12 +25,17 @@ export const getStudentsForFaculty = async (faculty: { _id: any; teaching?: ITea
   const grouped: GroupedStudents[] = [];
 
   for (const t of faculty.teaching) {
-    // Fetch students of this year and section
-    const students = await User.find({
+    // Fetch students of this year and section (and branch if specified)
+    const studentQuery: any = {
       role: "student",
       yearOfStudy: t.year,
       section: t.section
-    }).select("fullname rollNumber yearOfStudy section branch");
+    };
+    if (t.branch) {
+      studentQuery.branch = new RegExp(`^${t.branch.trim()}$`, "i");
+    }
+
+    const students = await User.find(studentQuery).select("fullname rollNumber yearOfStudy section branch");
 
     const classStudents = students.map((student) => {
       const sub = submissionMap.get(`${student._id.toString()}-${t.subject.toLowerCase()}`);
@@ -46,10 +52,19 @@ export const getStudentsForFaculty = async (faculty: { _id: any; teaching?: ITea
       };
     });
 
+    const distinctBranches = Array.from(
+      new Set(classStudents.map((s) => s.branch?.trim()).filter(Boolean))
+    ) as string[];
+
+    const studentClassBranch =
+      t.branch ||
+      (distinctBranches.length > 0 ? distinctBranches.join(", ") : "");
+
     grouped.push({
       year: t.year,
       section: t.section,
       subject: t.subject,
+      branch: studentClassBranch,
       assignmentsEnabled: !!t.assignmentsEnabled,
       students: classStudents
     });

@@ -5,6 +5,7 @@ export interface ITeaching {
   year: number;
   section: string;
   subject: string;
+  branch?: string | null;
   assignmentsEnabled?: boolean;
 }
 
@@ -33,6 +34,7 @@ const teachingSchema = new Schema<ITeaching>({
   year: { type: Number, required: true },
   section: { type: String, uppercase: true, required: true },
   subject: { type: String, required: true },
+  branch: { type: String, uppercase: true, default: null },
   assignmentsEnabled: { type: Boolean, default: false }
 }, { _id: false });
 

@@ -21,6 +21,7 @@ interface ClassItem {
   year: number;
   section: string;
   subject: string;
+  branch?: string;
   assignmentsEnabled: boolean;
   students: Student[];
 }
@@ -53,6 +54,7 @@ export default function FacultyDashboardClient({
     year: 1,
     section: "",
     subject: "",
+    branch: "",
   });
   const [addClassSaving, setAddClassSaving] = useState(false);
   const [addClassSuccess, setAddClassSuccess] = useState<string | null>(null);
@@ -131,7 +133,7 @@ export default function FacultyDashboardClient({
 
       setAddClassSuccess("Class added successfully! Refreshing class list...");
       setIsAddClassModalOpen(false);
-      setAddClassForm({ year: 1, section: "", subject: "" });
+      setAddClassForm({ year: 1, section: "", subject: "", branch: "" });
 
       // Reload page to re-fetch classes list on server
       setTimeout(() => {
@@ -600,6 +602,21 @@ export default function FacultyDashboardClient({
                   onChange={(e) => setAddClassForm({ ...addClassForm, section: e.target.value })}
                   placeholder="e.g. A"
                   className="w-full h-10 px-3 rounded-xl border border-slate-200 text-slate-800 text-sm focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all duration-200"
+                />
+              </div>
+
+              {/* Branch */}
+              <div className="flex flex-col">
+                <label htmlFor="modal-branch" className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                  Class Branch (e.g. CSE, ECE)
+                </label>
+                <input
+                  id="modal-branch"
+                  type="text"
+                  value={addClassForm.branch}
+                  onChange={(e) => setAddClassForm({ ...addClassForm, branch: e.target.value.toUpperCase() })}
+                  placeholder="e.g. CSE"
+                  className="w-full h-10 px-3 rounded-xl border border-slate-200 text-slate-800 text-sm uppercase focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all duration-200"
                 />
               </div>
 

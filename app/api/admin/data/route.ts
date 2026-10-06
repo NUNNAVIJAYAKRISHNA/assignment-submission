@@ -33,6 +33,7 @@ export async function GET(req: NextRequest) {
         year: t.year,
         section: t.section,
         subject: t.subject,
+        branch: t.branch || null,
         assignmentsEnabled: !!t.assignmentsEnabled,
       })),
       createdAt: f.createdAt ? f.createdAt.toISOString() : null,

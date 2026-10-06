@@ -15,6 +15,7 @@ export interface CreateUserInput {
     year?: string | number;
     section?: string;
     subject?: string;
+    branch?: string | null;
   }> | null;
 }
 
@@ -47,7 +48,8 @@ export function createUser({
       .map((t) => ({
         year: Number(t.year),
         section: t.section ? t.section.trim().toUpperCase() : "",
-        subject: t.subject?.trim() || ""
+        subject: t.subject?.trim() || "",
+        branch: t.branch ? t.branch.trim().toUpperCase() : null
       })) as ITeaching[]
   };
 }
