@@ -14,6 +14,7 @@ export default function FacultyRegistrationForm() {
   const [email, setEmail] = useState("");
   const [designation, setDesignation] = useState("");
   const [password, setPassword] = useState("");
+  const [facultyCode, setFacultyCode] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [teaching, setTeaching] = useState<TeachingInput[]>([
     { year: "", section: "", subject: "" },
@@ -45,6 +46,7 @@ export default function FacultyRegistrationForm() {
           email,
           designation,
           password,
+          facultyCode,
           teaching: teaching.filter(
             (t) => t.year.trim() !== "" || t.section.trim() !== "" || t.subject.trim() !== ""
           ),
@@ -61,6 +63,7 @@ export default function FacultyRegistrationForm() {
       setEmail("");
       setDesignation("");
       setPassword("");
+      setFacultyCode("");
       setTeaching([
         { year: "", section: "", subject: "" },
         { year: "", section: "", subject: "" },
@@ -202,6 +205,27 @@ export default function FacultyRegistrationForm() {
               )}
             </button>
           </div>
+        </div>
+
+        {/* Faculty Security Code */}
+        <div className="md:col-span-6 flex flex-col p-4 bg-amber-50/70 border border-amber-200/80 rounded-2xl">
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-xs font-bold text-amber-900 uppercase tracking-wider flex items-center gap-1.5">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              Faculty Security Code
+            </label>
+            <span className="text-[11px] font-medium text-amber-700">Required (Provided by Department)</span>
+          </div>
+          <input
+            type="password"
+            required
+            value={facultyCode}
+            onChange={(e) => setFacultyCode(e.target.value)}
+            placeholder="Enter department security code"
+            className="w-full h-11 px-4 rounded-xl border border-amber-200 bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all duration-200 text-sm font-mono"
+          />
         </div>
 
         {/* Teaching Assignments */}

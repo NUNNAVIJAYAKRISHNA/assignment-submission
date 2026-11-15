@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function LoginForm() {
   const [isForgotMode, setIsForgotMode] = useState(false);
+  const [isVerificationNeeded, setIsVerificationNeeded] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -20,12 +21,32 @@ export default function LoginForm() {
   const [forgotSuccess, setForgotSuccess] = useState<string | null>(null);
   const [forgotError, setForgotError] = useState<string | null>(null);
 
+  // Resend Verification States
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState<string | null>(null);
+  const [resendError, setResendError] = useState<string | null>(null);
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
+
   const router = useRouter();
+
+  // Cooldown timer effect
+  useEffect(() => {
+    if (cooldownSeconds > 0) {
+      const timer = setInterval(() => {
+        setCooldownSeconds((prev) => prev - 1);
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [cooldownSeconds]);
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
+    setIsVerificationNeeded(false);
+    // Clear resend states when switching to verification view
+    setResendSuccess(null);
+    setResendError(null);
 
     try {
       const res = await fetch("/api/login", {
@@ -36,6 +57,11 @@ export default function LoginForm() {
 
       const data = await res.json();
       if (!res.ok || !data.success) {
+        // Check if email is not verified
+        if (data.code === "EMAIL_NOT_VERIFIED") {
+          setIsVerificationNeeded(true);
+          return;
+        }
         throw new Error(data.message || "Login failed");
       }
 
@@ -45,6 +71,39 @@ export default function LoginForm() {
       setError(err.message || "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendVerification = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setResendError(null);
+    setResendSuccess(null);
+    setResendLoading(true);
+
+    try {
+      const res = await fetch("/api/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        // Handle 429 cooldown response from server
+        if (res.status === 429 && data.message) {
+          // Extract cooldown time from message if possible, default to 60s
+          const match = data.message.match(/(\d+)\s*seconds?/i);
+          setCooldownSeconds(match ? parseInt(match[1], 10) : 60);
+        }
+        throw new Error(data.message || "Failed to send verification email");
+      }
+
+      setResendSuccess(data.message || "Verification email sent! Check your inbox.");
+      setCooldownSeconds(60);
+    } catch (err: any) {
+      setResendError(err.message || "Something went wrong. Please try again.");
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -158,6 +217,129 @@ export default function LoginForm() {
               </svg>
               <span>Back to Login</span>
             </button>
+          </div>
+        </div>
+      ) : isVerificationNeeded ? (
+        /* --- EMAIL VERIFICATION NEEDED VIEW --- */
+        <div className="space-y-6 relative">
+          <div className="flex flex-col items-center mb-4">
+            <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shadow-sm mb-3">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight text-center">Email Not Verified</h1>
+            <p className="text-xs text-slate-500 mt-1 text-center max-w-xs">
+              Your account is registered but your email address hasn't been verified yet. Please check your inbox for the verification link.
+            </p>
+          </div>
+
+          {/* Helpful hints section */}
+          <div className="p-4 bg-amber-50 border border-amber-100 rounded-xl space-y-3">
+            <div className="flex items-start gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 shrink-0 mt-0.5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p className="text-xs text-amber-800 leading-relaxed">
+                <strong className="font-semibold">Check your spam/junk folder:</strong> Verification emails sometimes get filtered. Please check your spam, junk, or promotions folders.
+              </p>
+            </div>
+            <div className="flex items-start gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 shrink-0 mt-0.5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p className="text-xs text-amber-800 leading-relaxed">
+                <strong className="font-semibold">Verify your email address:</strong> If you still don't see the email, the address may have been entered incorrectly during registration.
+              </p>
+            </div>
+            <div className="flex items-start gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 shrink-0 mt-0.5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p className="text-xs text-amber-800 leading-relaxed">
+                <strong className="font-semibold">Registration may not have completed:</strong> If the email is correct but you never received any email, your registration might not have been successful.
+              </p>
+            </div>
+            <div className="flex items-start gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 shrink-0 mt-0.5 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <p className="text-xs text-rose-800 leading-relaxed">
+                <strong className="font-semibold">Important:</strong> Unverified accounts are deleted periodically. If verification fails, please contact an administrator for assistance.
+              </p>
+            </div>
+          </div>
+
+          {resendError && (
+            <div className="p-3.5 bg-rose-50 border border-rose-100 text-rose-600 text-xs font-semibold rounded-xl flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+              {resendError}
+            </div>
+          )}
+
+          {resendSuccess && (
+            <div className="p-3.5 bg-emerald-50 border border-emerald-100 text-emerald-700 text-xs font-semibold rounded-xl flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              {resendSuccess}
+            </div>
+          )}
+
+          <form onSubmit={handleResendVerification} className="flex flex-col gap-4">
+            <div className="flex flex-col">
+              <label htmlFor="resend-email" className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Registered Email</label>
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 pointer-events-none">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                  </svg>
+                </span>
+                <input
+                  id="resend-email"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="your.email@example.com"
+                  className="w-full h-11 pl-11 pr-4 rounded-xl border border-slate-200 bg-slate-50/50 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 transition-all text-sm"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={resendLoading || cooldownSeconds > 0}
+              className="w-full inline-flex items-center justify-center h-12 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 shadow-md hover:shadow-xl hover:shadow-amber-100 transform active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {resendLoading ? "Sending..." : cooldownSeconds > 0 ? `Resend available in ${cooldownSeconds}s` : "Resend Verification Email"}
+            </button>
+          </form>
+
+          <div className="pt-4 border-t border-slate-100 space-y-2 text-center">
+            <button
+              type="button"
+              onClick={() => {
+                setIsVerificationNeeded(false);
+                setResendSuccess(null);
+                setResendError(null);
+                setCooldownSeconds(0);
+              }}
+              className="text-xs font-bold text-indigo-600 hover:text-indigo-700 hover:underline transition-colors inline-flex items-center gap-1"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              <span>Back to Login</span>
+            </button>
+            <p className="text-xs text-slate-500">
+              Need help?{" "}
+              <a href="mailto:support@example.com" className="font-semibold text-indigo-600 hover:text-indigo-700 hover:underline transition-colors">
+                Contact Support
+              </a>
+            </p>
           </div>
         </div>
       ) : (

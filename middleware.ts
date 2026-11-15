@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 // Helper to decode JWT payload in Next.js Edge Runtime
-function decodeJwt(token: string): { _id: string; email: string; role: string } | null {
+function decodeJwt(token: string): { _id: string; email: string; role: string; exp?: number } | null {
   try {
     const parts = token.split(".");
     if (parts.length !== 3) return null;
@@ -25,6 +25,8 @@ export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Define paths to bypass middleware checks
+  const isStaticAsset = /\.(ico|png|jpg|jpeg|svg|css|js|webp|woff|woff2|ttf|txt)$/i.test(pathname);
+
   const isStaticOrPublicAsset =
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api/login") ||
@@ -34,9 +36,10 @@ export function middleware(req: NextRequest) {
     pathname.startsWith("/api/logout") ||
     pathname.startsWith("/api/forgot-password") ||
     pathname.startsWith("/api/reset-password") ||
+    pathname.startsWith("/api/resend-verification") ||
     pathname.startsWith("/reset-password") ||
-    pathname.includes(".") || // files like favicon.ico, images
-    pathname === "/verify-email";
+    isStaticAsset ||
+    pathname.startsWith("/verify-email");
 
   if (isStaticOrPublicAsset) {
     return NextResponse.next();
@@ -44,6 +47,13 @@ export function middleware(req: NextRequest) {
 
   const sessionCookie = req.cookies.get("session")?.value;
   const decoded = sessionCookie ? decodeJwt(sessionCookie) : null;
+
+  // Check token expiration if decoded
+  if (decoded && decoded.exp && Date.now() >= decoded.exp * 1000) {
+    // Token expired - redirect to login
+    const loginUrl = new URL("/login", req.url);
+    return NextResponse.redirect(loginUrl);
+  }
 
   // Protected student-only paths
   const isStudentPath =
@@ -67,11 +77,19 @@ export function middleware(req: NextRequest) {
     pathname === "/registration" ||
     pathname === "/faculty/register" ||
     pathname === "/admin/login" ||
-    pathname === "/reset-password";
+    pathname === "/reset-password" ||
+    pathname.startsWith("/verify-email");
 
   // Case 1: User is NOT logged in.
   if (!decoded) {
     if (!isPublicPage) {
+      // For API routes, return 401 JSON instead of HTML redirect
+      if (pathname.startsWith("/api/")) {
+        return NextResponse.json(
+          { success: false, message: "Unauthorized" },
+          { status: 401 }
+        );
+      }
       if (isAdminPath) {
         return NextResponse.redirect(new URL("/admin/login", req.url));
       }
